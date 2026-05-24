@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  workspace:
+    build: .
+    container_name: worksphere-workspace
+    ports:
+      - "3002:3002"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    environment:
+      DB_HOST: worksphere-postgres
+      DB_PORT: 5433
+
+      REDIS_HOST: worksphere-redis
+      REDIS_PORT: 6379
+    networks:
+      - worksphere-net
+
+networks:
+  worksphere-net:
+    external: true
