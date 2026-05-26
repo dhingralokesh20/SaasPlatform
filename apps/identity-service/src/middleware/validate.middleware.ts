@@ -1,41 +1,41 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
-import { ZodAny } from "zod";
+import { z } from "zod";
 
 import { AppError } from "../errors/AppError";
 
+type ValidationTarget = "body" | "query" | "params";
+
+const formatZodError = (error: z.ZodError) => {
+  const formattedErrors: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join(".") || "root";
+    if (!formattedErrors[key]) {
+      formattedErrors[key] = [];
+    }
+    formattedErrors[key].push(issue.message);
+  }
+  return formattedErrors;
+};
+
 export const validate = (
-  schema: ZodAny
+  schema: z.ZodType,
+  target: ValidationTarget = "body",
 ) => {
-  return (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const result = schema.safeParse({
-      body: req.body,
-      query: req.query,
-      params: req.params,
-    });
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req[target]);
 
     if (!result.success) {
       return next(
         new AppError({
           message: "Validation failed",
-
           statusCode: 400,
-
           code: "VALIDATION_ERROR",
-
-          data: result.error.flatten(),
-        })
+          data: formatZodError(result.error),
+        }),
       );
     }
-
-    req.body = result.data.body;
-    req.query = result.data.query;
-    req.params = result.data.params;
-
+    req[target] = result.data;
     next();
   };
 };

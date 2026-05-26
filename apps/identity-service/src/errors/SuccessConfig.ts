@@ -1,5 +1,6 @@
 export const HttpSuccessStatusCode = {
     SUCCESS: 200,
+    CREATED: 201
 }
 
 export const SuccessMessage =  {

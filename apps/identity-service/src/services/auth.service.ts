@@ -1,45 +1,68 @@
-import { User } from "../db/models/user.model";
+import { AppError } from "../errors/AppError";
+import { UserRepository } from "../repositories/user.repository";
+import { generateAccessToken } from "../utils/jwt";
+import { hashPassword } from "../utils/password";
+
+const userRepository = new UserRepository();
 
 export class AuthService {
-  async register(data: {
+  registerUser = async (userData: {
     email: string;
-    passwordHash: string;
-    username?: string;
-  }) {
-    const existingUser = await User.findOne({
-      where: {
-        email: data.email,
-      },
-    });
+    password: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+  }) => {
+    // check if user with same email exists
+    const existingUser = await userRepository.findByEmail(userData.email);
 
+    // if possible modify app error such that i dont need to write message
+    // i pass the data as function parameters not as object
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new AppError({
+        message: "User already exists",
+        statusCode: 409,
+        code: "USER_ALREADY_EXISTS",
+      });
     }
 
-    const user = await User.create({
-      email: data.email,
-      passwordHash: data.passwordHash,
-      username: data.username ?? null,
-    });
+    // check if the username is available or not
+    const existingUsername = await userRepository.findByUsername(
+      userData.username,
+    );
 
-    return user;
-  }
-
-  async login(email: string) {
-    const user = await User.findOne({
-      where: {
-        email,
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
+    if (existingUsername) {
+      throw new AppError({
+        message: "Username already taken",
+        statusCode: 409,
+        code: "USERNAME_ALREADY_EXISTS",
+      });
     }
+    const passwordHash = await hashPassword(userData.password);
 
-    return user;
-  }
+    // create user
+    const user = await userRepository.create({
+      email: userData.email,
+      username: userData.username,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      passwordHash,
+    });
 
-  async getUserById(id: string) {
-    return User.findByPk(id);
-  }
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+  },
+      accessToken,
+    };
+  };
 }

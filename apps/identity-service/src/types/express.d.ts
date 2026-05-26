@@ -1,11 +1,10 @@
-import pino from "pino";
+import { Logger } from "pino";
 
 declare global {
   namespace Express {
     interface Request {
       requestId: string;
-
-      logger: pino.Logger;
+      logger: Logger;
     }
   }
 }
