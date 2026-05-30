@@ -4,11 +4,11 @@ import { registerSchema } from "../validations/auth.validation";
 const AuthRoutes = {
     basePath : "/auth",
     routes: {
-        // login: {
-        //     method: "post",
-        //     handler: "login",
-        //     middleware: [],
-        // },
+        login: {
+            method: "post",
+            handler: "login",
+            middleware: [],
+        },
         register: {
             method: "post",
             handler: "register",
@@ -16,10 +16,10 @@ const AuthRoutes = {
                 validate(registerSchema)
             ]
         },
-        // ":userId": {
-        //     method: "get",
-        //     handler: "getUserById"
-        // }
+        refreshToken: {
+            method: "post",
+            handler: "getNewRefreshToken"
+        }
     }
 }
 

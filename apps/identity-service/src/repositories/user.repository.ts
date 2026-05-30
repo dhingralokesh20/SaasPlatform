@@ -7,11 +7,11 @@ export class UserRepository extends BaseRepository<User> {
     super(User);
   }
 
-  async findByEmail(email: string) {
+  async findUserByEmail(email: string) {
     return this.findOne({ email });
   }
 
-  async findByUsername(username: string) {
+  async findUserByUsername(username: string) {
     return this.findOne({ username });
   }
 }

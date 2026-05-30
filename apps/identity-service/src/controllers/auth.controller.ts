@@ -14,24 +14,19 @@ export class AuthController {
     });
   }
 
-  // async login(req: Request, res: Response) {
-  //   const { email } = req.body;
+  async login(req: Request, res: Response) {
+    const result = await authService.login(req.body);
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 
-  //   const user = await authService.login(email);
-
-  //   return res.json({
-  //     success: true,
-  //     user,
-  //   });
-  // }
-
-  // async getUserById(req: Request, res: Response) {
-  //   const userId = '';
-  //   const user = await authService.getUserById(userId);
-
-  //   return res.json({
-  //     success: true,
-  //     user,
-  //   });
-  // }
+  async getNewRefreshToken(req: Request, res: Response) {
+    const result = await authService.refreshAccessToken(req.body.token);
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 }
