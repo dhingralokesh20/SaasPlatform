@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../errors/AppError";
 import {
-  errorCode,
-  ErrorMessage,
-  HttpErrorStatusCode,
+  UnauthorizedError,
 } from "../errors/ErrorConfig";
 import { verifyAccessToken } from "../utils/jwt";
 
@@ -11,6 +9,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     email: string;
+    sessionId: string;
   };
 }
 
@@ -21,11 +20,7 @@ export const AuthMiddleware = (
 ) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new AppError({
-      message: ErrorMessage.UNAUTHORIZED,
-      statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-      code: errorCode.UNAUTHORIZED,
-    });
+    throw new AppError(UnauthorizedError);
   }
 
   const token = authHeader.split(" ")[1];
@@ -33,15 +28,12 @@ export const AuthMiddleware = (
     const decoded = verifyAccessToken(token) as {
       userId: string;
       email: string;
+      sessionId: string;
     };
 
     req.user = decoded;
     next();
   } catch {
-    throw new AppError({
-      message: ErrorMessage.UNAUTHORIZED,
-      statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-      code: errorCode.UNAUTHORIZED,
-    });
+    throw new AppError(UnauthorizedError);
   }
 };

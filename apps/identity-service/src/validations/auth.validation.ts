@@ -10,5 +10,10 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.email(),
-  password: z.string()
+  password: z.string(),
+  rememberMe: z.boolean().optional()
+})
+
+export const refreshTokenSchema = z.object({
+  token: z.string()
 })

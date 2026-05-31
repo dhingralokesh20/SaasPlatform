@@ -3,16 +3,29 @@ import {
   errorCode,
   ErrorMessage,
   HttpErrorStatusCode,
+  InvalidCredentialsError,
+  UnauthorizedError,
+  UserAlreadyExistsError,
+  UserNameAlreadyTakenError,
+  UserNotFoundError,
 } from "../errors/ErrorConfig";
 import { UserRepository } from "../repositories/user.repository";
+import { SessionRepository } from "../repositories/session.repository";
+import { RefreshTokenPayload } from "../types/session.types";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
 import { comparePassword, hashPassword } from "../utils/password";
+import { envConfig } from "../config/env.config";
+import { compareRefreshToken, hashRefreshToken } from "../utils/refresh-token";
+import { sequelize } from "../db/sequelize";
+import { Transaction } from "sequelize";
+import { SuccessMessage } from "../errors/SuccessConfig";
 
 const userRepository = new UserRepository();
+const sessionRepository = new SessionRepository();
 
 export class AuthService {
   registerUser = async (userData: {
@@ -22,136 +35,269 @@ export class AuthService {
     firstName: string;
     lastName: string;
   }) => {
-    // check if user with same email exists
-    const existingUser = await userRepository.findUserByEmail(userData.email);
+    const transaction = await sequelize.transaction();
 
-    // if possible modify app error such that i dont need to write message
-    // i pass the data as function parameters not as object
-    if (existingUser) {
-      throw new AppError({
-        message: ErrorMessage.USER_ALREADY_EXISTS,
-        statusCode: HttpErrorStatusCode.CONFLICT,
-        code: errorCode.USER_ALREADY_EXISTS,
-      });
+    try {
+      // check if user with same email exists
+      const existingUser = await userRepository.findUserByEmail(userData.email);
+
+      // if possible modify app error such that i dont need to write message
+      // i pass the data as function parameters not as object
+      if (existingUser) {
+        throw new AppError(UserAlreadyExistsError);
+      }
+
+      // check if the username is available or not
+      const existingUsername = await userRepository.findUserByUsername(
+        userData.username,
+      );
+
+      if (existingUsername) {
+        throw new AppError(UserNameAlreadyTakenError);
+      }
+      const passwordHash = await hashPassword(userData.password);
+
+      // create user
+      const user = await userRepository.create(
+        {
+          email: userData.email,
+          username: userData.username,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          passwordHash,
+        },
+        { transaction },
+      );
+
+      const { accessToken, refreshToken } = await this.generateUserTokens(
+        user.id,
+        user.email,
+        transaction,
+      );
+
+      await transaction.commit();
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
     }
+  };
 
-    // check if the username is available or not
-    const existingUsername = await userRepository.findUserByUsername(
-      userData.username,
+  login = async (userData: {
+    email: string;
+    password: string;
+    rememberMe: boolean;
+  }) => {
+    const transaction = await sequelize.transaction();
+    const { email, password, rememberMe = false } = userData;
+    try {
+      const user = await userRepository.findUserByEmail(email);
+
+      if (!user) {
+        throw new AppError(InvalidCredentialsError);
+      }
+
+      const isPasswordValid = await comparePassword(
+        password,
+        user.passwordHash,
+      );
+
+      if (!isPasswordValid) {
+        throw new AppError(InvalidCredentialsError);
+      }
+
+      const { accessToken, refreshToken } = await this.generateUserTokens(
+        user.id,
+        email,
+        transaction,
+        rememberMe,
+      );
+
+      await transaction.commit();
+      return {
+        user: {
+          id: user.id,
+          email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  };
+
+  generateUserTokens = async (
+    userId: string,
+    email: string,
+    transaction?: Transaction,
+    rememberMe: boolean = false,
+  ) => {
+    const expiryTime = rememberMe
+      ? envConfig.REFRESH_TOKEN_EXPIRY_REMEMBER_ME
+      : envConfig.REFRESH_TOKEN_EXPIRY;
+    // generate session
+    const session = await sessionRepository.create(
+      {
+        userId: userId,
+        refreshTokenHash: "",
+        expiresAt: new Date(Date.now() + expiryTime),
+        userAgent: null,
+        ipAddress: null,
+      },
+      { transaction },
     );
-
-    if (existingUsername) {
-      throw new AppError({
-        message: ErrorMessage.USERNAME_ALREADY_TAKEN,
-        statusCode: HttpErrorStatusCode.CONFLICT,
-        code: errorCode.USERNAME_TAKEN,
-      });
-    }
-    const passwordHash = await hashPassword(userData.password);
-
-    // create user
-    const user = await userRepository.create({
-      email: userData.email,
-      username: userData.username,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      passwordHash,
-    });
 
     const { accessToken, refreshToken } = this.generateTokens(
-      user.id,
-      user.email,
+      userId,
+      email,
+      session.id,
+    );
+    const refreshTokenHash = await hashRefreshToken(refreshToken);
+
+    await sessionRepository.updateRefreshTokenHash(
+      session.id,
+      refreshTokenHash,
+      { transaction },
     );
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-      accessToken,
-      refreshToken,
-    };
+    return { accessToken, refreshToken };
   };
 
-  login = async (userData: { email: string; password: string }) => {
-    const { email, password } = userData;
-    const user = await userRepository.findUserByEmail(email);
-
-    if (!user) {
-      throw new AppError({
-        message: ErrorMessage.INVALID_CREDENTIALS,
-        statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-        code: errorCode.INVALID_CREDENTIALS,
-      });
-    }
-
-    const isPasswordValid = await comparePassword(password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new AppError({
-        message: ErrorMessage.INVALID_CREDENTIALS,
-        statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-        code: errorCode.INVALID_CREDENTIALS,
-      });
-    }
-
-    const { accessToken, refreshToken } = this.generateTokens(user.id, email);
-    return {
-      user: {
-        id: user.id,
-        email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-      accessToken,
-      refreshToken,
-    };
-  };
-
-  generateTokens = (userId: string, email: string) => {
+  generateTokens = (userId: string, email: string, sessionId: string) => {
     const accessToken = generateAccessToken({
       userId,
       email,
+      sessionId,
     });
 
     const refreshToken = generateRefreshToken({
       userId: userId,
+      sessionId,
     });
 
     return { refreshToken, accessToken };
   };
 
   refreshAccessToken = async (refreshToken: string) => {
-    try {
-      const decodedToken = verifyRefreshToken(refreshToken) as {
-        userId: string;
-      };
+    let decodedToken: RefreshTokenPayload;
 
-      const user = await userRepository.findById(decodedToken.userId);
-      if (!user) {
-        throw new AppError({
-          message: ErrorMessage.USER_NOT_FOUND,
-          statusCode: HttpErrorStatusCode.BAD_REQUEST,
-          code: errorCode.USER_NOT_FOUND,
-        });
+    try {
+      decodedToken = verifyRefreshToken(refreshToken) as RefreshTokenPayload;
+    } catch {
+      throw new AppError(UnauthorizedError);
+    }
+
+    const transaction = await sequelize.transaction();
+
+    try {
+      const session = await sessionRepository.findActiveSession(
+        decodedToken.sessionId,
+        { transaction },
+      );
+
+      if (!session) {
+        throw new AppError(UnauthorizedError);
       }
 
-      const accessToken = generateAccessToken({
-        userId: user.id,
-        email: user.email,
+      const isValidRefreshToken = await compareRefreshToken(
+        refreshToken,
+        session.refreshTokenHash,
+      );
+
+      if (!isValidRefreshToken) {
+        await sessionRepository.revokeSession(session.id, { transaction });
+
+        throw new AppError(UnauthorizedError);
+      }
+
+      const user = await userRepository.findById(decodedToken.userId, {
+        transaction,
       });
 
-      return { accessToken };
+      if (!user) {
+        throw new AppError(UserNotFoundError);
+      }
+
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.rotateRefreshToken(
+          user.id,
+          user.email,
+          session.id,
+          transaction,
+        );
+
+      await transaction.commit();
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+      };
     } catch (error) {
-      throw new AppError({
-        message: ErrorMessage.UNAUTHORIZED,
-        statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-        code: errorCode.UNAUTHORIZED,
-      });
+      await transaction.rollback();
+
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw error;
     }
+  };
+
+  private rotateRefreshToken = async (
+    userId: string,
+    email: string,
+    sessionId: string,
+    transaction?: Transaction,
+  ) => {
+    const accessToken = generateAccessToken({
+      userId,
+      email,
+      sessionId,
+    });
+
+    const refreshToken = generateRefreshToken({
+      userId,
+      sessionId,
+    });
+
+    const refreshTokenHash = await hashRefreshToken(refreshToken);
+
+    await sessionRepository.rotateRefreshToken(sessionId, refreshTokenHash, {
+      transaction,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  };
+
+  logoutCurrentUserSession = async (sessionId: string) => {
+    const session = await sessionRepository.findActiveSession(sessionId);
+
+    if (!session) throw new AppError(UnauthorizedError);
+
+    await sessionRepository.revokeSession(sessionId);
+    return { message: SuccessMessage.LOGOUT_SUCCESS };
+  };
+
+  logoutAllActiveSessions = async (userId: string) => {
+    await sessionRepository.revokeAllSessionsByUserId(userId);
+    return { message: SuccessMessage.LOGOUT_ALL_DEVICES_SUCCESS };
   };
 }

@@ -8,6 +8,8 @@ export const controllerRegistry = {
     register: authController.register.bind(authController),
     login: authController.login.bind(authController),
     getNewRefreshToken: authController.getNewRefreshToken.bind(authController),
+    logoutCurrentSession: authController.logoutCurrentUserSession.bind(authController),
+    logoutAllDevices: authController.logoutAllDevices.bind(authController),
   },
   user: {
     getCurrentUser: userController.getCurrentUser.bind(userController)

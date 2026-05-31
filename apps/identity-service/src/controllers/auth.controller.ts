@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { HttpSuccessStatusCode } from "../errors/SuccessConfig";
+import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
 const authService = new AuthService();
 
@@ -29,4 +30,25 @@ export class AuthController {
       data: result,
     });
   }
+
+  async logoutCurrentUserSession(req: AuthenticatedRequest, res: Response) {
+    const result = await authService.logoutCurrentUserSession(
+      req.user!.sessionId,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+
+  async logoutAllDevices(req: AuthenticatedRequest, res: Response) {
+    const result = await authService.logoutAllActiveSessions(
+      req.user!.userId,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+  
 }
