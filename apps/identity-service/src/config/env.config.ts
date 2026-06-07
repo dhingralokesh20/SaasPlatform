@@ -18,9 +18,9 @@ const envSchema = z.object({
 
   REDIS_HOST: z.string(),
   REDIS_PORT: z.coerce.number(),
+  ACCESS_TOKEN_EXPIRY: z.coerce.number(),
   REFRESH_TOKEN_EXPIRY: z.coerce.number(),
-  REFRESH_TOKEN_EXPIRY_REMEMBER_ME: z.coerce.number()
-
+  REFRESH_TOKEN_EXPIRY_REMEMBER_ME: z.coerce.number(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -28,7 +28,7 @@ const parsedEnv = envSchema.safeParse(process.env);
 if (!parsedEnv.success) {
   console.error(
     "Invalid environment variables:",
-    parsedEnv.error.flatten().fieldErrors
+    parsedEnv.error.flatten().fieldErrors,
   );
 
   process.exit(1);

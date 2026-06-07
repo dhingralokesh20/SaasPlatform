@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import { getAuthorizedUser } from "../utils/auth.token";
 import { AppError } from "../errors/AppError";
-import {
-  UnauthorizedError,
-} from "../errors/ErrorConfig";
-import { verifyAccessToken } from "../utils/jwt";
+import { UnauthorizedError } from "../errors/ErrorConfig";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -18,22 +16,12 @@ export const AuthMiddleware = (
   _res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const accessToken = req.cookies.accessToken;
+
+  if (!accessToken) {
     throw new AppError(UnauthorizedError);
   }
+  req.user = getAuthorizedUser(accessToken);
 
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = verifyAccessToken(token) as {
-      userId: string;
-      email: string;
-      sessionId: string;
-    };
-
-    req.user = decoded;
-    next();
-  } catch {
-    throw new AppError(UnauthorizedError);
-  }
+  next();
 };

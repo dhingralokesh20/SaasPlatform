@@ -2,6 +2,12 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { HttpSuccessStatusCode } from "../errors/SuccessConfig";
 import { AuthenticatedRequest } from "../middleware/auth.middleware";
+import {
+  ACCESS_TOKEN_COOKIE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
+} from "../config/cookie.config";
+import { UnauthorizedError } from "../errors/ErrorConfig";
+import { AppError } from "../errors/AppError";
 
 const authService = new AuthService();
 
@@ -9,25 +15,50 @@ export class AuthController {
   // Platform Registration
   async register(req: Request, res: Response) {
     const result = await authService.registerUser(req.body);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
     return res.status(HttpSuccessStatusCode.CREATED).json({
       success: true,
-      data: result,
+      data: result.user,
     });
   }
 
   async login(req: Request, res: Response) {
     const result = await authService.login(req.body);
+
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+
     return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
-      data: result,
+      data: result.user,
     });
   }
 
   async getNewRefreshToken(req: Request, res: Response) {
-    const result = await authService.refreshAccessToken(req.body.token);
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError(UnauthorizedError);
+    }
+    const result = await authService.refreshAccessToken(refreshToken);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
     return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
-      data: result,
     });
   }
 
@@ -35,6 +66,8 @@ export class AuthController {
     const result = await authService.logoutCurrentUserSession(
       req.user!.sessionId,
     );
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
       data: result,
@@ -42,13 +75,12 @@ export class AuthController {
   }
 
   async logoutAllDevices(req: AuthenticatedRequest, res: Response) {
-    const result = await authService.logoutAllActiveSessions(
-      req.user!.userId,
-    );
+    const result = await authService.logoutAllActiveSessions(req.user!.userId);
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
       data: result,
     });
   }
-  
 }

@@ -91,4 +91,24 @@ export class SessionRepository extends BaseRepository<Session> {
       },
     );
   }
+
+  async deleteExpiredSessions() {
+    return this.delete({
+      expiresAt: {
+        [Op.lt]: new Date(),
+      },
+    });
+  }
+
+  async deleteRevokedSessions() {
+    const retentionDate = new Date();
+
+    retentionDate.setDate(retentionDate.getDate() - 30);
+    return this.delete({
+      isRevoked: true,
+      revokedAt: {
+        [Op.lt]: retentionDate,
+      },
+    });
+  }
 }

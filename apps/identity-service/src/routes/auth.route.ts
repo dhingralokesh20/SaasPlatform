@@ -1,4 +1,4 @@
-import { AuthMiddleware } from "../middleware/auth.middleware";
+import { SessionMiddleware } from "../middleware/sessionMiddleware";
 import { validate } from "../middleware/validate.middleware";
 import { loginSchema, registerSchema, refreshTokenSchema } from "../validations/auth.validation";
 
@@ -23,12 +23,12 @@ const AuthRoutes = {
     logout: {
       method: "post",
       handler: "logoutCurrentSession",
-      middleware: [AuthMiddleware],
-    },
+      middleware: [SessionMiddleware],
+  },
     logoutAll: {
       method: "post",
       handler: "logoutAllDevices",
-      middleware: [AuthMiddleware],
+      middleware: [SessionMiddleware],
     },
   },
 };
