@@ -1,7 +1,8 @@
 import { Worker } from "bullmq";
 import { SessionRepository } from "../repositories/session.repository";
 import { logger } from "../logger";
-import { redis } from "../redis";
+// import { redis } from "../redis";
+import { redisConfig } from "../config/redis.config";
 
 const sessionRepository = new SessionRepository();
 
@@ -14,6 +15,6 @@ export const sessionCleanupWorker = new Worker(
         logger.info(`[ SESSION-CLEANUP ] Expired = ${expiredCount}, Revoked = ${revokedCount}`);
     },
     {
-        connection: redis
+        connection: redisConfig
     }
 )

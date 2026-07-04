@@ -24,13 +24,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "outputMode": "static",
-            "security": {
-              "allowedHosts": []
-            }
+            "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {

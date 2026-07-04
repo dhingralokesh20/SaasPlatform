@@ -1,6 +1,10 @@
 import { SessionMiddleware } from "../middleware/sessionMiddleware";
 import { validate } from "../middleware/validate.middleware";
-import { loginSchema, registerSchema, refreshTokenSchema } from "../validations/auth.validation";
+import {
+  loginSchema,
+  registerSchema,
+  refreshTokenSchema,
+} from "../validations/auth.validation";
 
 const AuthRoutes = {
   basePath: "/auth",
@@ -18,16 +22,21 @@ const AuthRoutes = {
     refreshToken: {
       method: "post",
       handler: "getNewRefreshToken",
-      middleware: [validate(refreshTokenSchema)]
+      middleware: [validate(refreshTokenSchema)],
     },
     logout: {
       method: "post",
       handler: "logoutCurrentSession",
       middleware: [SessionMiddleware],
-  },
+    },
     logoutAll: {
       method: "post",
       handler: "logoutAllDevices",
+      middleware: [SessionMiddleware],
+    },
+    me: {
+      method: "get",
+      handler: "getLoggedInUserState",
       middleware: [SessionMiddleware],
     },
   },
