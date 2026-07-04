@@ -1,0 +1,16 @@
+.shell {
+  min-height: 100vh;
+}
+
+.shell-body {
+  margin-left: 240px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-content {
+  flex: 1;
+  padding: 1.5rem;
+  background: #f9fafb;
+}
