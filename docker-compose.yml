@@ -93,7 +93,8 @@ services:
 
     volumes:
       - ./apps/ui:/app/apps/ui
-
+    environment:
+      NG_BUILD_CACHE: /tmp/angular-cache
     working_dir: /app/apps/ui
 
     command: npm run dev

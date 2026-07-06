@@ -1,0 +1,10 @@
+{
+  "INVALID_CREDENTIALS": "Invalid user or password, Please try again.",
+  "UNAUTHORIZED": "Please login to access the resource.",
+  "USER_ALREADY_EXISTS": "User with same email is already registered, Please try a different email.",
+  "USERNAME_TAKEN": "User with same username is already registered, Please try a different username.",
+  "USER_NOT_FOUND": "User does not exists.",
+  "SUCCESS": "This operation was successful",
+  "LOGOUT_SUCCESS": "You have been logged out of your account.",
+  "LOGOUT_ALL_DEVICES_SUCCESS": "You have been logged out from all devices."
+}

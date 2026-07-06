@@ -1,0 +1,36 @@
+<section class="auth-page">
+  <div class="auth-card">
+    <header class="auth-header">
+      <h1 class="auth-title">Sign in</h1>
+      <p class="auth-subtitle">Enter your credentials to access your workspace</p>
+    </header>
+
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <label class="auth-field">
+        <span class="auth-label">Email</span>
+        <input class="auth-input" type="email" formControlName="email" />
+      </label>
+
+      <label class="auth-field">
+        <span class="auth-label">Password</span>
+        <input class="auth-input" type="password" formControlName="password" />
+      </label>
+
+      <!-- Error -->
+       @if(errorMessage) {
+         <p class="auth-error">
+           {{ errorMessage }}
+         </p>
+
+       }
+
+      <button class="auth-button" type="submit" [disabled]="loading">
+        {{ loading ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+    <p class="auth-footer">
+      Don't have an account?
+      <a class="auth-link" routerLink="/register">Create one</a>
+    </p>
+  </div>
+</section>
