@@ -4,6 +4,7 @@ import {
   ErrorMessage,
   HttpErrorStatusCode,
   InvalidCredentialsError,
+  InvalidTokenError,
   UnauthorizedError,
   UserAlreadyExistsError,
   UserNameAlreadyTakenError,
@@ -23,6 +24,7 @@ import { compareRefreshToken, hashRefreshToken } from "../utils/refresh-token";
 import { sequelize } from "../db/sequelize";
 import { Transaction } from "sequelize";
 import { SuccessMessage } from "../errors/SuccessConfig";
+import { generateResetToken, hashToken } from "../utils/crypto";
 
 const userRepository = new UserRepository();
 const sessionRepository = new SessionRepository();
@@ -299,5 +301,89 @@ export class AuthService {
   logoutAllActiveSessions = async (userId: string) => {
     await sessionRepository.revokeAllSessionsByUserId(userId);
     return { message: SuccessMessage.LOGOUT_ALL_DEVICES_SUCCESS };
+  };
+
+  forgetPassword = async (email: string) => {
+    try {
+      const user = await userRepository.findUserByEmail(email);
+
+      // Prevent email enumeration
+      if (!user) {
+        return {
+          success: true,
+          message: SuccessMessage.RESET_PASSWORD_LINK_GENERATED,
+        };
+      }
+
+      const rawToken = generateResetToken();
+      const hashedToken = hashToken(rawToken);
+
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      await userRepository.saveResetPasswordToken(
+        user.id,
+        hashedToken,
+        expiresAt,
+      );
+
+      const resetUrl = `${envConfig.FRONTEND_URL}/reset-password?token=${rawToken}`;
+
+      // TODO:
+      // await emailService.send({
+      //   type: EmailType.FORGOT_PASSWORD,
+      //   to: user.email,
+      //   mappings: {
+      //     firstName: user.firstName,
+      //     resetLink: resetUrl,
+      //   },
+      // });
+
+      // if (config.nodeEnv === "development") {
+      //   console.log("Password reset URL:", resetUrl);
+      // }
+
+      return {
+        success: true,
+        message: SuccessMessage.RESET_PASSWORD_LINK_GENERATED,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  private async getValidResetPasswordUser(token: string) {
+    const hashedToken = hashToken(token);
+
+    const user = await userRepository.findUserByResetToken(hashedToken);
+
+    if (!user) {
+      throw new AppError(InvalidTokenError);
+    }
+
+    return user;
+  }
+
+  validateResetPasswordRequest = async (token: string) => {
+    await this.getValidResetPasswordUser(token);
+
+    return {
+      success: true,
+      message: SuccessMessage.RESET_PASSWORD_TOKEN_VALID,
+    };
+  };
+  resetPassword = async (token: string, password: string) => {
+    const user = await this.getValidResetPasswordUser(token);
+
+    const passwordHash = await hashPassword(password);
+
+    await userRepository.resetPassword(user.id, passwordHash);
+
+    // TODO:
+    // await sessionService.invalidateAllSessions(user.id);
+
+    return {
+      success: true,
+      message: SuccessMessage.RESET_PASSWORD,
+    };
   };
 }

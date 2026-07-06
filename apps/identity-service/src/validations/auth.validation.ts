@@ -17,3 +17,16 @@ export const loginSchema = z.object({
 export const refreshTokenSchema = z.object({
   token: z.string()
 })
+
+export const forgetPasswordSchema = z.object({
+  email: z.email(),
+})
+
+export const validateResetPasswordSchema = z.object({
+  token: z.string()
+})
+
+export const resetPasswordSchema = z.object({
+  password: z.string(),
+  token: z.string()
+})

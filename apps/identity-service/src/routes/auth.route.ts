@@ -4,6 +4,9 @@ import {
   loginSchema,
   registerSchema,
   refreshTokenSchema,
+  forgetPasswordSchema,
+  validateResetPasswordSchema,
+  resetPasswordSchema,
 } from "../validations/auth.validation";
 
 const AuthRoutes = {
@@ -39,6 +42,21 @@ const AuthRoutes = {
       handler: "getLoggedInUserState",
       middleware: [SessionMiddleware],
     },
+    forgetPassword: {
+      method: "post",
+      handler: "forgetPassword",
+      middleware: [validate(forgetPasswordSchema)],
+    },
+    validateResetPasswordRequest: {
+      method: "post",
+      handler: "validateResetPasswordRequest",
+      middleware: [validate(validateResetPasswordSchema)],
+    },
+    resetPassword: {
+      method: "post",
+      handler : "resetPassword",
+      middlware: [validate(resetPasswordSchema)]
+    }
   },
 };
 

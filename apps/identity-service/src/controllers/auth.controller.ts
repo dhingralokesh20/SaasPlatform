@@ -83,10 +83,40 @@ export class AuthController {
       data: result,
     });
   }
+
   async getLoggedInUserState(req: AuthenticatedRequest, res: Response) {
     return res.status(200).json({
       success: true,
       data: req.user,
+    });
+  }
+
+  async forgetPassword(req: Request, res: Response) {
+    const result = await authService.forgetPassword(req.body.email);
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+
+  async validateResetPasswordRequest(req: Request, res: Response) {
+    const result = await authService.validateResetPasswordRequest(
+      req.body.token,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+
+  async resetPassword(req: Request, res: Response) {
+    const result = await authService.resetPassword(
+      req.body.token,
+      req.body.password,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
     });
   }
 }

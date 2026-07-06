@@ -5,7 +5,12 @@ import { RefreshTokenPayload } from "../types/session.types";
 const ACCESS_TOKEN_SECRET = envConfig.JWT_ACCESS_SECRET!;
 const REFRESH_TOKEN_SECRET = envConfig.JWT_REFRESH_SECRET!;
 
+
+const RESET_PASSWORD_TOKEN_SECRET = envConfig.RESET_PASSWORD_TOKEN_SECRET!;
+
+
 const ACCESS_TOKEN_EXPIRY = "15m";
+const RESET_PASSWORD_TOKEN_EXPIRY = "30m";
 const REFRESH_TOKEN_EXPIRY = "7d";
 
 export const generateAccessToken = (payload: {
@@ -24,6 +29,12 @@ export const generateRefreshToken = (payload: RefreshTokenPayload) => {
   });
 };
 
+export const generateResetPasswordToken = (payload: RefreshTokenPayload) => {
+  return jwt.sign(payload, RESET_PASSWORD_TOKEN_SECRET, {
+    expiresIn: RESET_PASSWORD_TOKEN_EXPIRY,
+  });
+};
+
 export const verifyAccessToken = (token: string) => {
   return jwt.verify(token, ACCESS_TOKEN_SECRET);
 };
@@ -31,3 +42,7 @@ export const verifyAccessToken = (token: string) => {
 export const verifyRefreshToken = (token: string) => {
   return jwt.verify(token, REFRESH_TOKEN_SECRET);
 };
+
+export const verifyResetPasswordToken = (token : string) => {
+  return jwt.verify(token, RESET_PASSWORD_TOKEN_SECRET);
+}

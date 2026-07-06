@@ -23,9 +23,10 @@ export class User extends Model<
 
   declare emailVerified: CreationOptional<boolean>;
 
-  declare status: CreationOptional<
-    "ACTIVE" | "INACTIVE" | "SUSPENDED"
-  >;
+  declare status: CreationOptional<"ACTIVE" | "INACTIVE" | "SUSPENDED">;
+
+  declare resetTokenHash: string | null;
+  declare resetTokenExpiresAt: Date | null;
 
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -72,14 +73,20 @@ User.init(
     },
 
     status: {
-      type: DataTypes.ENUM(
-        "ACTIVE",
-        "INACTIVE",
-        "SUSPENDED"
-      ),
+      type: DataTypes.ENUM("ACTIVE", "INACTIVE", "SUSPENDED"),
       defaultValue: "ACTIVE",
     },
 
+    resetTokenHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    resetTokenExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
@@ -94,5 +101,5 @@ User.init(
     sequelize,
     tableName: "users",
     timestamps: true,
-  }
+  },
 );

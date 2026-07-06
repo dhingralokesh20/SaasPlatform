@@ -1,5 +1,5 @@
 import { sequelize } from "./sequelize";
-import "./models"
+import "./models";
 import { logger } from "../logger";
 export const connectDB = async () => {
   try {

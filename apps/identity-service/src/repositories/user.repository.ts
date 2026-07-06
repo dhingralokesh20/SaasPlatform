@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { User } from "../db/models/user.model";
 
 import { BaseRepository } from "./base.repository";
@@ -13,5 +14,39 @@ export class UserRepository extends BaseRepository<User> {
 
   async findUserByUsername(username: string) {
     return this.findOne({ username });
+  }
+
+  async saveResetPasswordToken(userId: string, token: string, expiresAt: Date) {
+    return this.update(
+      {
+        id: userId,
+      },
+      {
+        resetTokenHash: token,
+        resetTokenExpiresAt: expiresAt,
+      },
+    );
+  }
+
+  async findUserByResetToken(tokenHash: string) {
+    return this.model.findOne({
+      where: {
+        resetTokenHash: tokenHash,
+        resetTokenExpiresAt: {
+          [Op.gt]: new Date(),
+        },
+      },
+    });
+  }
+
+  async resetPassword(userId: string, passwordHash: string) {
+    return this.update(
+      { id: userId },
+      {
+        passwordHash,
+        resetTokenHash: null,
+        resetTokenExpiresAt: null,
+      },
+    );
   }
 }

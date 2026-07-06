@@ -6,7 +6,7 @@ const envSchema = z.object({
     .default("development"),
 
   PORT: z.coerce.number().default(3001),
-
+  FRONTEND_URL: z.string(),
   DB_HOST: z.string(),
   DB_PORT: z.coerce.number(),
   DB_NAME: z.string(),
@@ -15,6 +15,7 @@ const envSchema = z.object({
 
   JWT_ACCESS_SECRET: z.string(),
   JWT_REFRESH_SECRET: z.string(),
+  RESET_PASSWORD_TOKEN_SECRET: z.string(),
 
   REDIS_HOST: z.string(),
   REDIS_PORT: z.coerce.number(),

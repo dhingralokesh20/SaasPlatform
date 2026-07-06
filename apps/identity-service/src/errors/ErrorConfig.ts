@@ -15,6 +15,7 @@ export const ErrorMessage = {
   USERNAME_ALREADY_TAKEN:
     "User with same username is already registered, Please try a different username.",
   USER_NOT_FOUND: "User does not exists.",
+  TOKEN_INVALID: "The token is expired or invalid. Kindly recheck the details.",
 };
 
 export const errorCode = {
@@ -23,6 +24,7 @@ export const errorCode = {
   USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
   USERNAME_TAKEN: "USERNAME_TAKEN",
   USER_NOT_FOUND: "USER_NOT_FOUND",
+  TOKEN_INVALID: "TOKEN_INVALID"
 };
 
 export const UnauthorizedError = {
@@ -54,3 +56,9 @@ export const UserNameAlreadyTakenError = {
   statusCode: HttpErrorStatusCode.CONFLICT,
   code: errorCode.USERNAME_TAKEN,
 };
+
+export const InvalidTokenError = {
+  message: ErrorMessage.TOKEN_INVALID,
+  statusCode: HttpErrorStatusCode.BAD_REQUEST,
+  code: errorCode.TOKEN_INVALID,
+}
