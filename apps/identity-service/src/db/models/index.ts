@@ -1,5 +1,6 @@
 import { User } from "./user.model";
 import { Session } from "./session.model";
+import { Email } from "./email.model";
 
 User.hasMany(Session, {
   foreignKey: "userId",
@@ -11,4 +12,4 @@ Session.belongsTo(User, {
   as: "user",
 });
 
-export { User, Session };
+export { User, Session, Email };

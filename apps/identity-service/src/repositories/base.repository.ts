@@ -10,6 +10,13 @@ export class BaseRepository<T extends Model> {
     });
   }
 
+  async findAll(whereClause: WhereOptions, options?: RepositoryOptions) {
+    return this.model.findAll({
+      where: whereClause,
+      transaction: options?.transaction as Transaction,
+    });
+  }
+
   async findOne(whereClause: WhereOptions, options?: RepositoryOptions) {
     return this.model.findOne({
       where: whereClause,

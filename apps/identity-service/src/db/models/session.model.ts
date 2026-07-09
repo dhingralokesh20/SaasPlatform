@@ -7,7 +7,6 @@ import {
 } from "sequelize";
 
 import { sequelize } from "../sequelize";
-import { User } from "./user.model";
 
 export class Session extends Model<
   InferAttributes<

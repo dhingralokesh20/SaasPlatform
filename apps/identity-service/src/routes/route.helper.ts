@@ -1,11 +1,20 @@
-import { Application } from "express";
+import { Application, RequestHandler } from "express";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { controllerRegistry } from "../controllers/controller.registry";
-import { HttpMethod, ModuleRouteConfig } from "../types/route.types";
+import {
+  HttpMethod,
+  ModuleRouteConfig,
+} from "../types/route.types";
+
+interface RouteDefinition {
+  method: HttpMethod;
+  handler: string;
+  middleware?: RequestHandler[];
+}
 
 const methodMap: Record<
   HttpMethod,
-  (path: string, ...handlers: any[]) => any
+  (path: string, ...handlers: RequestHandler[]) => any
 > = {
   get: (path, ...h) => app.get(path, ...h),
   post: (path, ...h) => app.post(path, ...h),
@@ -20,53 +29,70 @@ export const initRouteEngine = (expressApp: Application) => {
   app = expressApp;
 };
 
-export const registerModuleRoutes = (
-  moduleName: string,
-  config: ModuleRouteConfig
+const isRouteDefinition = (
+  value: unknown,
+): value is RouteDefinition => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "method" in value &&
+    "handler" in value
+  );
+};
+
+const registerRoutes = (
+  controller: any,
+  routes: Record<string, unknown>,
+  basePath: string,
+  currentPath = "",
 ) => {
-  const controllers =
-    (controllerRegistry as any)[moduleName];
+  Object.entries(routes).forEach(([key, value]) => {
+    const routePath = `${currentPath}/${key}`;
 
-  if (!controllers) {
-    throw new Error(`Controller group not found: ${moduleName}`);
-  }
+    if (isRouteDefinition(value)) {
+      const handler = controller[value.handler];
 
-  Object.entries(config.routes).forEach(
-    ([path, route]) => {
-    const controllerHandler =
-      controllers[route.handler];
-
-    if (!controllerHandler) {
-      throw new Error(
-        `Handler "${route.handler}" not found in ${moduleName}`
-      );
-    }
-
-    const handler =
-      controllerHandler.bind(controllers);
-      if (!handler) {
+      if (typeof handler !== "function") {
         throw new Error(
-          `Handler "${route.handler}" not found in ${moduleName}`
+          `Handler "${value.handler}" not found.`,
         );
       }
 
-    const normalizedPath =
-      path.startsWith("/")
-        ? path
-        : `/${path}`;
+      const fullPath = `${basePath}${routePath}`;
 
-    const fullPath =
-      `${config.basePath}${normalizedPath}`;
-      
-      const middlewares = route.middleware || [];
-
-      const routeMethod = methodMap[route.method];
+      const routeMethod = methodMap[value.method];
 
       routeMethod(
         fullPath,
-        ...middlewares,
-        asyncHandler(handler)
+        ...(value.middleware ?? []),
+        asyncHandler(handler.bind(controller)),
+      );
+    } else {
+      registerRoutes(
+        controller,
+        value as Record<string, unknown>,
+        basePath,
+        routePath,
       );
     }
+  });
+};
+
+export const registerModuleRoutes = (
+  moduleName: string,
+  config: ModuleRouteConfig,
+) => {
+  const controller = controllerRegistry[moduleName as keyof typeof controllerRegistry];
+
+  if (!controller) {
+    throw new Error(
+      `Controller group not found: ${moduleName}`,
+    );
+  }
+
+  registerRoutes(
+    controller,
+    config.routes as Record<string, unknown>,
+    config.basePath,
   );
 };

@@ -29,7 +29,7 @@ const AuthRoutes = {
     },
     logout: {
       method: "post",
-      handler: "logoutCurrentSession",
+      handler: "logoutCurrentUserSession",
       middleware: [SessionMiddleware],
     },
     logoutAll: {
@@ -42,20 +42,22 @@ const AuthRoutes = {
       handler: "getLoggedInUserState",
       middleware: [SessionMiddleware],
     },
-    forgetPassword: {
-      method: "post",
-      handler: "forgetPassword",
-      middleware: [validate(forgetPasswordSchema)],
-    },
-    validateResetPasswordRequest: {
-      method: "post",
-      handler: "validateResetPasswordRequest",
-      middleware: [validate(validateResetPasswordSchema)],
-    },
-    resetPassword: {
-      method: "post",
-      handler : "resetPassword",
-      middlware: [validate(resetPasswordSchema)]
+    password: {
+      forget: {
+        method: "post",
+        handler: "forgetPassword",
+        middleware: [validate(forgetPasswordSchema)],
+      },
+      validateRequest: {
+        method: "post",
+        handler: "validateResetPasswordRequest",
+        middleware: [validate(validateResetPasswordSchema)],
+      },
+      reset: {
+        method: "post",
+        handler: "resetPassword",
+        middleware: [validate(resetPasswordSchema)],
+      },
     }
   },
 };
