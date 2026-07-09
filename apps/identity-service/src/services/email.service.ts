@@ -1,4 +1,4 @@
-import { EmailStatus, EmailType } from "../config/emailConstants";
+import { EmailStatus, EmailType } from "../constants/emailConstants";
 import { Email } from "../db/models";
 import { TemplateLoader } from "../emails/template.loader";
 import { renderTemplate } from "../emails/template.renderer";
@@ -42,7 +42,7 @@ export class EmailService {
       const providerMessageId = await this.sendEmail(
         email.to,
         email.subject ?? "Notification",
-        html
+        html,
       );
 
       await email.update({
@@ -50,7 +50,6 @@ export class EmailService {
         sentAt: new Date(),
         providerMessageId,
       });
-
     } catch (err: any) {
       await email.update({
         status: EmailStatus.FAILED,

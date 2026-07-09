@@ -6,8 +6,7 @@ import {
   CreationOptional,
 } from "sequelize";
 import { sequelize } from "../sequelize";
-import { EmailStatus, EmailType } from "../../config/emailConstants";
-
+import { EmailStatus, EmailType } from "../../constants/emailConstants";
 
 export class Email extends Model<
   InferAttributes<Email>,

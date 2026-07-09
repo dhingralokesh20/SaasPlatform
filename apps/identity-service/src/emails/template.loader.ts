@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { EmailType } from "../config/emailConstants";
+import { EmailType } from "../constants/emailConstants";
 import { EmailTemplateMap } from "./template.registery";
 
 export class TemplateLoader {
@@ -13,11 +13,7 @@ export class TemplateLoader {
       throw new Error(`No template mapped for type: ${type}`);
     }
 
-    const filePath = path.join(
-      __dirname,
-      "templates",
-      fileName
-    );
+    const filePath = path.join(__dirname, "templates", fileName);
 
     if (this.templateCache.has(filePath)) {
       return this.templateCache.get(filePath)!;

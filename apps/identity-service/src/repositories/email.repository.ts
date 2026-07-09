@@ -1,4 +1,4 @@
-import { EmailStatus } from "../config/emailConstants";
+import { EmailStatus } from "../constants/emailConstants";
 import { Email } from "../db/models";
 import { BaseRepository } from "./base.repository";
 
