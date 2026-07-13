@@ -4,6 +4,9 @@ export const HttpErrorStatusCode = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   CONFLICT: 409,
+  GONE: 410,
+  TOO_MANY_REQUESTS: 429,
+  LOCKED: 423,
 };
 
 export const ErrorMessage = {
@@ -16,6 +19,13 @@ export const ErrorMessage = {
     "User with same username is already registered, Please try a different username.",
   USER_NOT_FOUND: "User does not exists.",
   TOKEN_INVALID: "The token is expired or invalid. Kindly recheck the details.",
+
+  OTP_NOT_FOUND: "OTP not found.",
+  OTP_EXPIRED: "OTP has expired. Please request a new OTP.",
+  INVALID_OTP: "Invalid OTP. Please try again.",
+  OTP_LOCKED: "Too many failed attempts. OTP has been locked.",
+  OTP_COOLDOWN: "Please wait before requesting another OTP.",
+  OTP_ACTIVATION_FAILED: "Failed to activate OTP. Please try again.",
 };
 
 export const errorCode = {
@@ -24,7 +34,14 @@ export const errorCode = {
   USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
   USERNAME_TAKEN: "USERNAME_TAKEN",
   USER_NOT_FOUND: "USER_NOT_FOUND",
-  TOKEN_INVALID: "TOKEN_INVALID"
+  TOKEN_INVALID: "TOKEN_INVALID",
+
+  OTP_NOT_FOUND: "OTP_NOT_FOUND",
+  OTP_EXPIRED: "OTP_EXPIRED",
+  INVALID_OTP: "INVALID_OTP",
+  OTP_LOCKED: "OTP_LOCKED",
+  OTP_COOLDOWN: "OTP_COOLDOWN",
+  OTP_ACTIVATION_FAILED: "OTP_ACTIVATION_FAILED",
 };
 
 export const UnauthorizedError = {
@@ -61,4 +78,34 @@ export const InvalidTokenError = {
   message: ErrorMessage.TOKEN_INVALID,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
   code: errorCode.TOKEN_INVALID,
-}
+};
+
+export const InvalidOtpError = {
+  code: errorCode.INVALID_OTP,
+  message: ErrorMessage.INVALID_OTP,
+  statusCode: HttpErrorStatusCode.BAD_REQUEST,
+};
+
+export const OtpLockedError = {
+  code: errorCode.OTP_LOCKED,
+  message: ErrorMessage.OTP_LOCKED,
+  statusCode: HttpErrorStatusCode.LOCKED,
+};
+
+export const OtpExpiredError = {
+  code: errorCode.OTP_EXPIRED,
+  message: ErrorMessage.OTP_EXPIRED,
+  statusCode: HttpErrorStatusCode.GONE,
+};
+
+export const OtpCooldownError = {
+  code: errorCode.OTP_COOLDOWN,
+  message: ErrorMessage.OTP_COOLDOWN,
+  statusCode: HttpErrorStatusCode.TOO_MANY_REQUESTS,
+};
+
+export const OtpActivationFailedError = {
+  code: errorCode.OTP_ACTIVATION_FAILED,
+  message: ErrorMessage.OTP_ACTIVATION_FAILED,
+  statusCode: HttpErrorStatusCode.INVALID_OPERATION,
+};

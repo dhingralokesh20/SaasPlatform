@@ -1,4 +1,4 @@
-import { sessionCleanupQueue } from "../queues/session-cleanup.queue";
+import { sessionCleanupQueue } from "../queues/queues";
 
 export const initializeSessionCleanupQueue = async () => {
   await sessionCleanupQueue.upsertJobScheduler(

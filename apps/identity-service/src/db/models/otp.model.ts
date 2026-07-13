@@ -15,7 +15,7 @@ export class Otp extends Model<
 > {
   declare id: CreationOptional<string>;
   declare userId: string | null;
-  declare email: string | null;
+  declare email: string;
   declare type: OtpType;
   declare otpHash: string;
   declare status: CreationOptional<OtpStatus>;
@@ -42,7 +42,7 @@ Otp.init(
 
     email: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
 
     type: {
