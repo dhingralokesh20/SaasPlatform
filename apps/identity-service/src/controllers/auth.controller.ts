@@ -29,6 +29,15 @@ export class AuthController {
 
   async login(req: Request, res: Response) {
     const result = await authService.login(req.body);
+    if (result?.requiresMfa) {
+      return res.status(HttpSuccessStatusCode.SUCCESS).json({
+        success: true,
+        data: {
+          requiresMfa: true,
+          challengeId: result.challengeId,
+        },
+      });
+    }
 
     res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.cookie(
@@ -114,6 +123,31 @@ export class AuthController {
       req.body.token,
       req.body.password,
     );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+
+  async verifyMFA(req: Request, res: Response) {
+    const result = await authService.verifyMFA(req.body);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result.user,
+    });
+  }
+  async resendMFA(req: Request, res: Response) {
+    const { challengeId } = req.body;
+
+    const result = await authService.resendMFA(challengeId);
+
     return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
       data: result,

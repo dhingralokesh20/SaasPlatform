@@ -30,3 +30,12 @@ export const resetPasswordSchema = z.object({
   password: z.string(),
   token: z.string()
 })
+
+export const verifyMFASchema = z.object({
+  challengeId: z.string(),
+  otp: z.string(),
+})
+
+export const resendMFASchema = z.object({
+  challengeId: z.string(),
+})

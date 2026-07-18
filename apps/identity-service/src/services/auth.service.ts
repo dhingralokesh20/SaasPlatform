@@ -1,8 +1,7 @@
 import { AppError } from "../errors/AppError";
 import {
-  errorCode,
-  ErrorMessage,
-  HttpErrorStatusCode,
+  InvalidChallengeError,
+  InvalidChallengeStateError,
   InvalidCredentialsError,
   InvalidTokenError,
   UnauthorizedError,
@@ -13,6 +12,7 @@ import {
 import { UserRepository } from "../repositories/user.repository";
 import { SessionRepository } from "../repositories/session.repository";
 import { RefreshTokenPayload } from "../types/session.types";
+import { LoginResponse, LoginSuccessResponse } from "../types/auth.types";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -25,11 +25,96 @@ import { sequelize } from "../db/sequelize";
 import { Transaction } from "sequelize";
 import { SuccessMessage } from "../errors/SuccessConfig";
 import { generateResetToken, hashToken } from "../utils/crypto";
-
+import { LoginStateMachine } from "../state-machine/auth/login/LoginStateMachine";
+import { LoginState } from "../state-machine/auth/login/LoginState";
+import { authConfig } from "../config/auth.config";
+import { LoginChallengeService } from "../state-machine/auth/login/loginChallengeService";
+import { OtpService } from "./otp.service";
+import { OtpType } from "../constants/otpConstants";
+import { User } from "../db/models";
 const userRepository = new UserRepository();
 const sessionRepository = new SessionRepository();
 
 export class AuthService {
+  private readonly loginStateMachine = new LoginStateMachine();
+  private readonly loginStateChallengeService = new LoginChallengeService();
+  private readonly otpService = new OtpService();
+
+  private async completeAuthentication(
+    user: User,
+    rememberMe: boolean,
+  ): Promise<LoginSuccessResponse> {
+    const transaction = await sequelize.transaction();
+
+    try {
+      const { accessToken, refreshToken } = await this.generateUserTokens(
+        user.id,
+        user.email,
+        transaction,
+        rememberMe,
+      );
+
+      await transaction.commit();
+
+      return {
+        requiresMfa: false,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  private rotateRefreshToken = async (
+    userId: string,
+    email: string,
+    sessionId: string,
+    transaction?: Transaction,
+  ) => {
+    const accessToken = generateAccessToken({
+      userId,
+      email,
+      sessionId,
+    });
+
+    const refreshToken = generateRefreshToken({
+      userId,
+      sessionId,
+    });
+
+    const refreshTokenHash = await hashRefreshToken(refreshToken);
+
+    await sessionRepository.rotateRefreshToken(sessionId, refreshTokenHash, {
+      transaction,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  };
+
+  private async getValidResetPasswordUser(token: string) {
+    const hashedToken = hashToken(token);
+
+    const user = await userRepository.findUserByResetToken(hashedToken);
+
+    if (!user) {
+      throw new AppError(InvalidTokenError);
+    }
+
+    return user;
+  }
+
   registerUser = async (userData: {
     email: string;
     password: string;
@@ -99,48 +184,53 @@ export class AuthService {
     email: string;
     password: string;
     rememberMe: boolean;
-  }) => {
-    const transaction = await sequelize.transaction();
+  }): Promise<LoginResponse> => {
     const { email, password, rememberMe = false } = userData;
-    try {
-      const user = await userRepository.findUserByEmail(email);
 
-      if (!user) {
-        throw new AppError(InvalidCredentialsError);
-      }
+    const user = await userRepository.findUserByEmail(email);
 
-      const isPasswordValid = await comparePassword(
-        password,
-        user.passwordHash,
-      );
-
-      if (!isPasswordValid) {
-        throw new AppError(InvalidCredentialsError);
-      }
-
-      const { accessToken, refreshToken } = await this.generateUserTokens(
-        user.id,
-        email,
-        transaction,
-        rememberMe,
-      );
-
-      await transaction.commit();
-      return {
-        user: {
-          id: user.id,
-          email,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
-        accessToken,
-        refreshToken,
-      };
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    if (!user) {
+      throw new AppError(InvalidCredentialsError);
     }
+
+    const isPasswordValid = await comparePassword(password, user.passwordHash);
+
+    if (!isPasswordValid) {
+      throw new AppError(InvalidCredentialsError);
+    }
+
+    const nextState = this.loginStateMachine.transition({
+      from: LoginState.PASSWORD_VERIFIED,
+      to: authConfig.mfaEnabled
+        ? LoginState.MFA_PENDING
+        : LoginState.AUTHENTICATED,
+    });
+
+    if (nextState === LoginState.MFA_PENDING) {
+      const challenge = await this.loginStateChallengeService.create({
+        userId: user.id,
+        email: user.email,
+        rememberMe,
+        state: nextState,
+      });
+      try {
+        await this.otpService.generateOtp({
+          email: user.email,
+          type: OtpType.LOGIN_MFA,
+        });
+
+        return {
+          requiresMfa: true,
+          challengeId: challenge.challengeId,
+        };
+      } catch (error) {
+        await this.loginStateChallengeService.delete(challenge.challengeId);
+
+        throw error;
+      }
+    }
+
+    return this.completeAuthentication(user, rememberMe);
   };
 
   generateUserTokens = async (
@@ -260,35 +350,6 @@ export class AuthService {
     }
   };
 
-  private rotateRefreshToken = async (
-    userId: string,
-    email: string,
-    sessionId: string,
-    transaction?: Transaction,
-  ) => {
-    const accessToken = generateAccessToken({
-      userId,
-      email,
-      sessionId,
-    });
-
-    const refreshToken = generateRefreshToken({
-      userId,
-      sessionId,
-    });
-
-    const refreshTokenHash = await hashRefreshToken(refreshToken);
-
-    await sessionRepository.rotateRefreshToken(sessionId, refreshTokenHash, {
-      transaction,
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  };
-
   logoutCurrentUserSession = async (sessionId: string) => {
     const session = await sessionRepository.findActiveSession(sessionId);
 
@@ -351,18 +412,6 @@ export class AuthService {
     }
   };
 
-  private async getValidResetPasswordUser(token: string) {
-    const hashedToken = hashToken(token);
-
-    const user = await userRepository.findUserByResetToken(hashedToken);
-
-    if (!user) {
-      throw new AppError(InvalidTokenError);
-    }
-
-    return user;
-  }
-
   validateResetPasswordRequest = async (token: string) => {
     await this.getValidResetPasswordUser(token);
 
@@ -384,6 +433,59 @@ export class AuthService {
     return {
       success: true,
       message: SuccessMessage.RESET_PASSWORD,
+    };
+  };
+
+  verifyMFA = async (data: { challengeId: string; otp: string }) => {
+    const { challengeId, otp } = data;
+
+    const challenge = await this.loginStateChallengeService.get(challengeId);
+
+    await this.otpService.verifyOtp({
+      email: challenge.email,
+      type: OtpType.LOGIN_MFA,
+      otp,
+    });
+
+    this.loginStateMachine.transition({
+      from: challenge.state,
+      to: LoginState.AUTHENTICATED,
+    });
+
+    const user = await userRepository.findById(challenge.userId);
+
+    if (!user) {
+      throw new AppError(UserNotFoundError);
+    }
+
+    const result = await this.completeAuthentication(
+      user,
+      challenge.rememberMe,
+    );
+
+    await this.loginStateChallengeService.delete(challengeId);
+
+    return result;
+  };
+
+  resendMFA = async (challengeId: string) => {
+    const challenge = await this.loginStateChallengeService.get(challengeId);
+
+    if (!challenge) {
+      throw new AppError(InvalidChallengeError);
+    }
+
+    if (challenge.state !== LoginState.MFA_PENDING) {
+      throw new AppError(InvalidChallengeStateError);
+    }
+
+    await this.otpService.resendOtp({
+      email: challenge.email,
+      type: OtpType.LOGIN_MFA,
+    });
+
+    return {
+      message: "OTP sent successfully",
     };
   };
 }

@@ -26,6 +26,10 @@ export const ErrorMessage = {
   OTP_LOCKED: "Too many failed attempts. OTP has been locked.",
   OTP_COOLDOWN: "Please wait before requesting another OTP.",
   OTP_ACTIVATION_FAILED: "Failed to activate OTP. Please try again.",
+  LOGIN_CHALLENGE_EXPIRED: "Login Challenge has expired, kindly retry.",
+  LOGIN_CHALLENGE_INVALID: "Invalid login challenge. Please login again.",
+  LOGIN_CHALLENGE_INVALID_STATE:
+    "Login challenge is no longer valid. Please restart the login process.",
 };
 
 export const errorCode = {
@@ -42,6 +46,9 @@ export const errorCode = {
   OTP_LOCKED: "OTP_LOCKED",
   OTP_COOLDOWN: "OTP_COOLDOWN",
   OTP_ACTIVATION_FAILED: "OTP_ACTIVATION_FAILED",
+  LOGIN_CHALLENGE_EXPIRED: "LOGIN_CHALLENGE_EXPIRED",
+  LOGIN_CHALLENGE_INVALID: "LOGIN_CHALLENGE_INVALID",
+  LOGIN_CHALLENGE_INVALID_STATE: "LOGIN_CHALLENGE_INVALID_STATE",
 };
 
 export const UnauthorizedError = {
@@ -108,4 +115,22 @@ export const OtpActivationFailedError = {
   code: errorCode.OTP_ACTIVATION_FAILED,
   message: ErrorMessage.OTP_ACTIVATION_FAILED,
   statusCode: HttpErrorStatusCode.INVALID_OPERATION,
+};
+
+export const LoginChallengeExpiredError = {
+  code: errorCode.LOGIN_CHALLENGE_EXPIRED,
+  message: ErrorMessage.LOGIN_CHALLENGE_EXPIRED,
+  statusCode: HttpErrorStatusCode.UNAUTHORIZED,
+};
+
+export const InvalidChallengeError = {
+  code: errorCode.LOGIN_CHALLENGE_INVALID,
+  message: ErrorMessage.LOGIN_CHALLENGE_INVALID,
+  statusCode: HttpErrorStatusCode.BAD_REQUEST,
+};
+
+export const InvalidChallengeStateError = {
+  code: errorCode.LOGIN_CHALLENGE_INVALID_STATE,
+  message: ErrorMessage.LOGIN_CHALLENGE_INVALID_STATE,
+  statusCode: HttpErrorStatusCode.BAD_REQUEST,
 };

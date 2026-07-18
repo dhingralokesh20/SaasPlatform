@@ -7,6 +7,8 @@ import {
   forgetPasswordSchema,
   validateResetPasswordSchema,
   resetPasswordSchema,
+  verifyMFASchema,
+  resendMFASchema,
 } from "../validations/auth.validation";
 
 const AuthRoutes = {
@@ -58,6 +60,16 @@ const AuthRoutes = {
         handler: "resetPassword",
         middleware: [validate(resetPasswordSchema)],
       },
+    },
+    verifyMFA: {
+      method: "post",
+      handler: "verifyMFA",
+      middleware: [validate(verifyMFASchema)]
+    },
+    resendMFA: {
+      method: "post",
+      handler: "resendMFA",
+      middleware: [validate(resendMFASchema)]
     }
   },
 };

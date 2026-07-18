@@ -43,7 +43,7 @@ export class OtpService {
 
   async generateOtp(params: GenerateOtpParams): Promise<{ id: string }> {
     const plainOtp = generateNumericOtp(OTP_CONFIG.LENGTH);
-
+    console.log(plainOtp)
     // Store only hashed OTP, never plaintext OTP
     const otpHash = hashOtp(plainOtp);
 

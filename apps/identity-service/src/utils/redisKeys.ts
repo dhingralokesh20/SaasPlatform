@@ -5,3 +5,7 @@ export const OtpKey = (type: OtpType, identifier: string) =>
 
 export const otpCooldownKey = (type: OtpType, identifier: string) =>
   `otp:cooldown:${type}:${identifier}`;
+
+export const LoginChallengeKey = (
+  challengeId: string,
+) => `login:challenge:${challengeId}`;
