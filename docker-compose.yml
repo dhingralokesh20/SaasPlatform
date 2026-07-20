@@ -1,5 +1,4 @@
 services:
-
   postgres:
     image: postgres:16
     container_name: worksphere-postgres
@@ -93,11 +92,12 @@ services:
 
     volumes:
       - ./apps/ui:/app/apps/ui
-    environment:
-      NG_BUILD_CACHE: /tmp/angular-cache
+      - /app/apps/ui/node_modules
+      - angular_cache:/tmp/angular-cache
+
     working_dir: /app/apps/ui
 
     command: npm run dev
-  
 volumes:
   postgres_data:
+  angular_cache:

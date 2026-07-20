@@ -6,11 +6,18 @@ import { User } from '../interfaces/user.interface';
   providedIn: 'root',
 })
 export class AuthService {
-
   constructor(private http: HttpClientService) {}
 
   login(data: { email: string; password: string; rememberMe?: boolean }) {
     return this.http.post('/auth/login', data);
+  }
+
+  verifyMFA(data: { challengeId: string; otp: string }) {
+    return this.http.post('/auth/verifyMFA', data);
+  }
+
+  resendMFAOtp(data: { challengeId: string }) {
+    return this.http.post('/auth/resendMFA', data);
   }
 
   logout() {
@@ -19,5 +26,9 @@ export class AuthService {
 
   me() {
     return this.http.get<User>('/auth/me');
+  }
+
+  refreshToken() {
+    return this.http.post('/auth/refreshToken', {});
   }
 }

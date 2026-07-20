@@ -1,6 +1,26 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChildren, QueryList, ElementRef, OnDestroy } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+  Output,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  OnDestroy,
+  AfterViewInit,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
@@ -8,54 +28,77 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, MatProgressSpinnerModule],
   templateUrl: './otp-verification.component.html',
-  styleUrl: './otp-verification.component.css'
+  styleUrl: './otp-verification.component.css',
 })
-export class OtpVerificationComponent implements OnInit, OnChanges, OnDestroy {
-  @Input() email: string = '';
+export class OtpVerificationComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  @Input() email = '';
   @Input() verificationType: 'mfa' | 'reset' | 'email' = 'mfa';
-  @Input() loading: boolean = false;
-  
-  @Input() success: boolean = false;
-  @Input() successMessage: string = 'Verification successful. Continuing...';
-  @Input() errorType: 'none' | 'invalid' | 'expired' | 'blocked' = 'none';
+
+  @Input() loading = false;
+
+  @Input() success = false;
+  @Input() successMessage = 'Verification successful. Continuing...';
+
+  @Input()
+  errorType: 'none' | 'invalid' | 'expired' | 'blocked' = 'none';
 
   @Output() verify = new EventEmitter<string>();
   @Output() backToLogin = new EventEmitter<void>();
   @Output() resend = new EventEmitter<void>();
 
-  @ViewChildren('otpInput') inputs!: QueryList<ElementRef<HTMLInputElement>>;
+  @ViewChildren('otpInput')
+  inputs!: QueryList<ElementRef<HTMLInputElement>>;
 
   protected otpForm: FormGroup;
+
   protected readonly digits = [0, 1, 2, 3, 4, 5];
 
   protected resendCooldown = 60;
   protected resendDisabled = true;
-  private cooldownTimer: any;
 
   protected isShaking = false;
 
-  constructor(private fb: FormBuilder) {
-    const group: any = {};
-    this.digits.forEach(i => {
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly cdr: ChangeDetectorRef,
+  ) {
+    const group: Record<string, any> = {};
+
+    this.digits.forEach((i) => {
       group[`digit${i}`] = ['', [Validators.required, Validators.pattern(/^[0-9]$/)]];
     });
+
     this.otpForm = this.fb.group(group);
   }
 
   ngOnInit(): void {
-    this.startCooldown();
+    if (!this.success) {
+      this.startCooldown();
+    }
   }
-
   ngAfterViewInit(): void {
-    // Focus the first input automatically
     setTimeout(() => {
       this.focusInput(0);
     }, 300);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['errorType'] && changes['errorType'].currentValue !== 'none' && changes['errorType'].currentValue !== null) {
+    if (changes['errorType'] && this.errorType !== 'none') {
       this.triggerShake();
+    }
+
+    if (changes['loading'] || changes['success']) {
+      if (this.loading || this.success) {
+        this.otpForm.disable({
+          emitEvent: false,
+        });
+      } else {
+        this.otpForm.enable({
+          emitEvent: false,
+        });
+      }
     }
   }
 
@@ -67,10 +110,13 @@ export class OtpVerificationComponent implements OnInit, OnChanges, OnDestroy {
     switch (this.errorType) {
       case 'invalid':
         return 'Invalid verification code.';
+
       case 'expired':
         return 'This code has expired.';
+
       case 'blocked':
         return 'Too many incorrect attempts. Please request a new code.';
+
       default:
         return null;
     }
@@ -78,21 +124,24 @@ export class OtpVerificationComponent implements OnInit, OnChanges, OnDestroy {
 
   protected onKeyDown(event: KeyboardEvent, index: number): void {
     const input = event.target as HTMLInputElement;
-    const key = event.key;
 
-    if (key === 'Backspace') {
+    if (event.key === 'Backspace') {
       event.preventDefault();
-      
+
       if (input.value) {
         this.setControlValue(index, '');
       } else if (index > 0) {
         this.setControlValue(index - 1, '');
         this.focusInput(index - 1);
       }
-    } else if (key === 'ArrowLeft' && index > 0) {
+    }
+
+    if (event.key === 'ArrowLeft' && index > 0) {
       event.preventDefault();
       this.focusInput(index - 1);
-    } else if (key === 'ArrowRight' && index < 5) {
+    }
+
+    if (event.key === 'ArrowRight' && index < 5) {
       event.preventDefault();
       this.focusInput(index + 1);
     }
@@ -100,85 +149,94 @@ export class OtpVerificationComponent implements OnInit, OnChanges, OnDestroy {
 
   protected onInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
-    let val = input.value;
-    
-    val = val.replace(/\D/g, '');
-    if (val.length > 1) {
-      val = val.charAt(val.length - 1);
-    }
-    
-    this.setControlValue(index, val);
 
-    if (val && index < 5) {
+    let value = input.value.replace(/\D/g, '');
+
+    if (value.length > 1) {
+      value = value.charAt(value.length - 1);
+    }
+
+    this.setControlValue(index, value);
+
+    if (value && index < 5) {
       this.focusInput(index + 1);
     }
   }
 
   protected onPaste(event: ClipboardEvent): void {
     event.preventDefault();
-    const clipboardData = event.clipboardData;
-    if (!clipboardData) return;
 
-    const pastedText = clipboardData.getData('text').trim();
-    const digitsOnly = pastedText.replace(/\D/g, '').substring(0, 6);
+    const text = event.clipboardData?.getData('text');
 
-    if (digitsOnly.length > 0) {
-      for (let i = 0; i < digitsOnly.length; i++) {
-        this.setControlValue(i, digitsOnly.charAt(i));
-      }
-      
-      const nextFocus = Math.min(digitsOnly.length, 5);
-      this.focusInput(nextFocus);
-      
-      if (digitsOnly.length === 6) {
-        this.onSubmit();
-      }
+    if (!text) {
+      return;
     }
-  }
 
-  protected focusInput(index: number): void {
-    const inputsArray = this.inputs.toArray();
-    if (inputsArray[index]) {
-      inputsArray[index].nativeElement.focus();
-      inputsArray[index].nativeElement.select();
+    const otp = text.replace(/\D/g, '').substring(0, 6);
+
+    for (let i = 0; i < otp.length; i++) {
+      this.setControlValue(i, otp.charAt(i));
     }
-  }
 
-  private setControlValue(index: number, val: string): void {
-    this.otpForm.get(`digit${index}`)?.setValue(val);
+    this.focusInput(Math.min(otp.length, 5));
+
+    if (otp.length === 6) {
+      this.onSubmit();
+    }
   }
 
   protected isFormComplete(): boolean {
     return this.otpForm.valid;
   }
-
   protected onSubmit(): void {
-    if (this.otpForm.invalid || this.loading || this.success) return;
+    console.log('OTP SUBMIT CLICKED');
 
-    let otpCode = '';
-    for (let i = 0; i < 6; i++) {
-      otpCode += this.otpForm.get(`digit${i}`)?.value || '';
+    console.log('FORM:', this.otpForm.value);
+    console.log('VALID:', this.otpForm.valid);
+    console.log('LOADING:', this.loading);
+    console.log('SUCCESS:', this.success);
+
+    if (this.otpForm.invalid || this.loading || this.success) {
+      console.log('OTP SUBMIT BLOCKED');
+      return;
     }
 
-    this.verify.emit(otpCode);
-  }
+    let otp = '';
 
+    for (let i = 0; i < 6; i++) {
+      otp += this.otpForm.get(`digit${i}`)?.value || '';
+    }
+
+    console.log('EMITTING OTP:', otp);
+
+    this.verify.emit(otp);
+  }
   protected onBack(): void {
     this.backToLogin.emit();
   }
 
   protected onResend(): void {
-    if (this.resendDisabled) return;
+    if (this.resendDisabled) {
+      return;
+    }
+
     this.resend.emit();
+  }
+
+  // Parent can call this after successful resend
+  public restartResendCooldown(): void {
     this.startCooldown();
   }
 
   private startCooldown(): void {
     this.clearCooldown();
+
     this.resendCooldown = 60;
     this.resendDisabled = true;
+
     this.cooldownTimer = setInterval(() => {
       this.resendCooldown--;
+
       if (this.resendCooldown <= 0) {
         this.resendDisabled = false;
         this.clearCooldown();
@@ -193,8 +251,26 @@ export class OtpVerificationComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  protected focusInput(index: number): void {
+    const input = this.inputs.toArray()[index];
+
+    if (input) {
+      input.nativeElement.focus();
+      input.nativeElement.select();
+    }
+  }
+
+  private setControlValue(index: number, value: string): void {
+    const control = this.otpForm.get(`digit${index}`);
+
+    control?.setValue(value);
+    control?.markAsTouched();
+    control?.updateValueAndValidity();
+  }
+
   private triggerShake(): void {
     this.isShaking = true;
+
     setTimeout(() => {
       this.isShaking = false;
     }, 500);

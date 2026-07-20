@@ -14,23 +14,23 @@
   <form [formGroup]="otpForm" (ngSubmit)="onSubmit()">
     <!-- 6 digit boxes -->
     <div class="otp-inputs-grid">
-      <input 
-        #otpInput
-        *ngFor="let index of digits"
-        type="text" 
-        [formControlName]="'digit' + index"
-        class="otp-box"
-        [class.box-error]="errorType !== 'none'"
-        [class.box-success]="success"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        maxlength="1"
-        autocomplete="one-time-code"
-        (keydown)="onKeyDown($event, index)"
-        (input)="onInput($event, index)"
-        (paste)="onPaste($event)"
-        [disabled]="loading || success"
-      />
+      @for (index of digits; track index) {
+        <input
+          #otpInput
+          type="text"
+          [formControlName]="'digit' + index"
+          class="otp-box"
+          [class.box-error]="errorType !== 'none'"
+          [class.box-success]="success"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="1"
+          autocomplete="one-time-code"
+          (keydown)="onKeyDown($event, index)"
+          (input)="onInput($event, index)"
+          (paste)="onPaste($event)"
+        />
+      }
     </div>
 
     <!-- State Messages -->
@@ -38,8 +38,8 @@
       <!-- Success State -->
       <div class="otp-success-message" *ngIf="success">
         <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+          <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
         </svg>
         <span>{{ successMessage }}</span>
       </div>
@@ -54,10 +54,10 @@
     <!-- Actions Row -->
     <div class="otp-actions">
       <!-- Resend Code Button with Cooldown -->
-      <button 
-        class="resend-btn" 
-        type="button" 
-        (click)="onResend()" 
+      <button
+        class="resend-btn"
+        type="button"
+        (click)="onResend()"
         [disabled]="resendDisabled || loading || success"
       >
         <span *ngIf="resendDisabled">Resend in {{ resendCooldown }}s</span>
@@ -65,11 +65,7 @@
       </button>
 
       <!-- Verify Code Primary CTA -->
-      <button 
-        class="verify-btn" 
-        type="submit" 
-        [disabled]="!isFormComplete() || loading || success"
-      >
+      <button class="verify-btn" type="submit" [disabled]="!isFormComplete() || loading || success">
         <span class="btn-text" *ngIf="!loading && !success">Verify Code</span>
         <span class="btn-loading" *ngIf="loading">
           <mat-spinner diameter="18" color="accent"></mat-spinner>
@@ -86,11 +82,21 @@
       <!-- Hidden/Reserved space where future MFA methods will reside (Authenticator App, Passkey, Backup Code) -->
       <span class="future-note">Try another verification method?</span>
       <div class="future-methods-list">
-        <button class="method-btn" type="button" aria-label="Use Authenticator App" (click)="$event.preventDefault()">
+        <button
+          class="method-btn"
+          type="button"
+          aria-label="Use Authenticator App"
+          (click)="$event.preventDefault()"
+        >
           <span class="material-icons-outlined">phonelink_setup</span>
           Authenticator App
         </button>
-        <button class="method-btn" type="button" aria-label="Use Backup Codes" (click)="$event.preventDefault()">
+        <button
+          class="method-btn"
+          type="button"
+          aria-label="Use Backup Codes"
+          (click)="$event.preventDefault()"
+        >
           <span class="material-icons-outlined">vpn_key</span>
           Backup Codes
         </button>
