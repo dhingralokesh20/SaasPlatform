@@ -36,6 +36,7 @@ import { User } from "../db/models";
 import { RATE_LIMITS } from "../constants/rateLimitContants";
 import { rateLimitKey } from "../utils/redisKeys";
 import { rateLimitService } from "./rateLimit.service";
+import { outboxEventService } from "./outboxEvent.service";
 const userRepository = new UserRepository();
 const sessionRepository = new SessionRepository();
 
@@ -437,21 +438,40 @@ export class AuthService {
 
       const rawToken = generateResetToken();
       const hashedToken = hashToken(rawToken);
+      const resetUrl = `${envConfig.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      await userRepository.saveResetPasswordToken(
-        user.id,
-        hashedToken,
-        expiresAt,
-      );
+      await sequelize.transaction(async (transaction) => {
+        await userRepository.saveResetPasswordToken(
+          user.id,
+          hashedToken,
+          expiresAt,
+          {
+            transaction,
+          },
+        );
 
+        await outboxEventService.createEvent(
+          {
+            eventType: "PASSWORD_RESET_REQUESTED",
+            aggregateType: "USER",
+            aggregateId: user.id,
+            payload: {
+              email: user.email,
+              resetUrl,
+            },
+          },
+          {
+            transaction,
+          },
+        );
+      });
       await rateLimitService.increment(
         forgotPasswordKey,
         RATE_LIMITS.FORGOT_PASSWORD.windowSeconds,
       );
 
-      const resetUrl = `${envConfig.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
       // TODO:
       // await emailService.send({

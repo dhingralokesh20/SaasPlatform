@@ -2,6 +2,7 @@ import { Op } from "sequelize";
 import { User } from "../db/models/user.model";
 
 import { BaseRepository } from "./base.repository";
+import { RepositoryOptions } from "../types/repository.types";
 
 export class UserRepository extends BaseRepository<User> {
   constructor() {
@@ -16,7 +17,12 @@ export class UserRepository extends BaseRepository<User> {
     return this.findOne({ username });
   }
 
-  async saveResetPasswordToken(userId: string, token: string, expiresAt: Date) {
+  async saveResetPasswordToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+    options?: RepositoryOptions,
+  ) {
     return this.update(
       {
         id: userId,
@@ -25,6 +31,7 @@ export class UserRepository extends BaseRepository<User> {
         resetTokenHash: token,
         resetTokenExpiresAt: expiresAt,
       },
+      options,
     );
   }
 

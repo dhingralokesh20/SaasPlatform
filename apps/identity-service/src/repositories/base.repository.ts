@@ -47,4 +47,14 @@ export class BaseRepository<T extends Model> {
       transaction: options?.transaction as Transaction,
     });
   }
+  async increment(
+    field: string,
+    where: WhereOptions<T>,
+    options?: RepositoryOptions,
+  ) {
+    return this.model.increment(field, {
+      where,
+      transaction: options?.transaction,
+    });
+  }
 }

@@ -1,3 +1,5 @@
+import { Transaction } from "sequelize";
+
 export interface RepositoryOptions {
-  transaction?: unknown;
+  transaction?: Transaction;
 }
