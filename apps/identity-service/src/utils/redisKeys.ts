@@ -9,3 +9,10 @@ export const otpCooldownKey = (type: OtpType, identifier: string) =>
 export const LoginChallengeKey = (
   challengeId: string,
 ) => `login:challenge:${challengeId}`;
+
+export const rateLimitKey = (
+  category: string,
+  identifier: string,
+): string => {
+  return `rate-limit:${category}:${identifier}`;
+};

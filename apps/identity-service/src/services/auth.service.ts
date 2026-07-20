@@ -4,6 +4,7 @@ import {
   InvalidChallengeStateError,
   InvalidCredentialsError,
   InvalidTokenError,
+  RateLimitExceededError,
   UnauthorizedError,
   UserAlreadyExistsError,
   UserNameAlreadyTakenError,
@@ -32,6 +33,9 @@ import { LoginChallengeService } from "../state-machine/auth/login/loginChalleng
 import { OtpService } from "./otp.service";
 import { OtpType } from "../constants/otpConstants";
 import { User } from "../db/models";
+import { RATE_LIMITS } from "../constants/rateLimitContants";
+import { rateLimitKey } from "../utils/redisKeys";
+import { rateLimitService } from "./rateLimit.service";
 const userRepository = new UserRepository();
 const sessionRepository = new SessionRepository();
 
@@ -115,6 +119,23 @@ export class AuthService {
     return user;
   }
 
+  private async checkLoginRateLimit(email: string) {
+    const result = await rateLimitService.consume({
+      key: rateLimitKey("login", email),
+      limit: RATE_LIMITS.LOGIN.limit,
+      windowSeconds: RATE_LIMITS.LOGIN.windowSeconds,
+    });
+
+    if (!result.allowed) {
+      throw new AppError({
+        ...RateLimitExceededError,
+        data: {
+          retryAfterSeconds: result.retryAfterSeconds,
+        },
+      });
+    }
+  }
+
   registerUser = async (userData: {
     email: string;
     password: string;
@@ -187,17 +208,39 @@ export class AuthService {
   }): Promise<LoginResponse> => {
     const { email, password, rememberMe = false } = userData;
 
+    const loginRateLimitKey = rateLimitKey("login", email);
+    const canAttempt = await rateLimitService.check(
+      loginRateLimitKey,
+      RATE_LIMITS.LOGIN.limit,
+    );
+
+    if (!canAttempt) {
+      throw new AppError(RateLimitExceededError);
+    }
+
     const user = await userRepository.findUserByEmail(email);
 
     if (!user) {
+      await rateLimitService.increment(
+        loginRateLimitKey,
+        RATE_LIMITS.LOGIN.windowSeconds,
+      );
+
       throw new AppError(InvalidCredentialsError);
     }
 
     const isPasswordValid = await comparePassword(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      await rateLimitService.increment(
+        loginRateLimitKey,
+        RATE_LIMITS.LOGIN.windowSeconds,
+      );
+
       throw new AppError(InvalidCredentialsError);
     }
+
+    await rateLimitService.reset(loginRateLimitKey);
 
     const nextState = this.loginStateMachine.transition({
       from: LoginState.PASSWORD_VERIFIED,
@@ -366,6 +409,22 @@ export class AuthService {
 
   forgetPassword = async (email: string) => {
     try {
+      const forgotPasswordKey = rateLimitKey("forgot-password", email);
+
+      const canRequest = await rateLimitService.check(
+        forgotPasswordKey,
+        RATE_LIMITS.FORGOT_PASSWORD.limit,
+      );
+
+      if (!canRequest) {
+        throw new AppError({
+          ...RateLimitExceededError,
+          data: {
+            retryAfterSeconds:
+              await rateLimitService.getRetryAfter(forgotPasswordKey),
+          },
+        });
+      }
       const user = await userRepository.findUserByEmail(email);
 
       // Prevent email enumeration
@@ -385,6 +444,11 @@ export class AuthService {
         user.id,
         hashedToken,
         expiresAt,
+      );
+
+      await rateLimitService.increment(
+        forgotPasswordKey,
+        RATE_LIMITS.FORGOT_PASSWORD.windowSeconds,
       );
 
       const resetUrl = `${envConfig.FRONTEND_URL}/reset-password?token=${rawToken}`;
@@ -441,6 +505,20 @@ export class AuthService {
 
     const challenge = await this.loginStateChallengeService.get(challengeId);
 
+    const rateLimit = await rateLimitService.consume({
+      key: rateLimitKey("mfa-verify", challenge.email),
+      limit: RATE_LIMITS.MFA_VERIFY.limit,
+      windowSeconds: RATE_LIMITS.MFA_VERIFY.windowSeconds,
+    });
+
+    if (!rateLimit.allowed) {
+      throw new AppError({
+        ...RateLimitExceededError,
+        data: {
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        },
+      });
+    }
     await this.otpService.verifyOtp({
       email: challenge.email,
       type: OtpType.LOGIN_MFA,

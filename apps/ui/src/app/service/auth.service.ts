@@ -31,4 +31,12 @@ export class AuthService {
   refreshToken() {
     return this.http.post('/auth/refreshToken', {});
   }
+
+  forgotPassword(data: { email: string }) {
+    return this.http.post('/auth/forgot-password', data);
+  }
+
+  resetPassword(data: { token: string; password: string }) {
+    return this.http.post('/auth/reset-password', data);
+  }
 }

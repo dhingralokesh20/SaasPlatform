@@ -1,6 +1,5 @@
 import { AppError } from "../errors/AppError";
 import {
-  errorCode,
   ErrorMessage,
   HttpErrorStatusCode,
 } from "../errors/ErrorConfig";

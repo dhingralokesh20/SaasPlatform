@@ -1,4 +1,5 @@
 import { OtpStatus, OtpType, OTP_CONFIG } from "../constants/otpConstants";
+import { RATE_LIMITS } from "../constants/rateLimitContants";
 import { sequelize } from "../db/sequelize";
 import { AppError } from "../errors/AppError";
 import {
@@ -11,7 +12,8 @@ import {
 import { redis } from "../redis";
 import { otpRepository } from "../repositories/otp.repository";
 import { generateNumericOtp, hashOtp, safeCompare } from "../utils/otp.util";
-import { otpCooldownKey, OtpKey } from "../utils/redisKeys";
+import { otpCooldownKey, OtpKey, rateLimitKey } from "../utils/redisKeys";
+import { rateLimitService } from "./rateLimit.service";
 
 interface GenerateOtpParams {
   email: string;
@@ -42,8 +44,25 @@ export class OtpService {
   }
 
   async generateOtp(params: GenerateOtpParams): Promise<{ id: string }> {
+    const key = rateLimitKey("otp-generate", params.email);
+
+    const rateLimit = await rateLimitService.consume({
+      key,
+      limit: RATE_LIMITS.OTP_GENERATE.limit,
+      windowSeconds: RATE_LIMITS.OTP_GENERATE.windowSeconds,
+    });
+
+    if (!rateLimit.allowed) {
+      throw new AppError({
+        ...OtpCooldownError,
+        data: {
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        },
+      });
+    }
+
     const plainOtp = generateNumericOtp(OTP_CONFIG.LENGTH);
-    console.log(plainOtp)
+    console.log(plainOtp);
     // Store only hashed OTP, never plaintext OTP
     const otpHash = hashOtp(plainOtp);
 

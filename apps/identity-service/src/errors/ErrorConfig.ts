@@ -30,9 +30,10 @@ export const ErrorMessage = {
   LOGIN_CHALLENGE_INVALID: "Invalid login challenge. Please login again.",
   LOGIN_CHALLENGE_INVALID_STATE:
     "Login challenge is no longer valid. Please restart the login process.",
+  RATE_LIMIT_EXCEEDED: "Too many requests. Please try again later.",
 };
 
-export const errorCode = {
+export const ErrorCode = {
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
   UNAUTHORIZED: "UNAUTHORIZED",
   USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
@@ -49,88 +50,95 @@ export const errorCode = {
   LOGIN_CHALLENGE_EXPIRED: "LOGIN_CHALLENGE_EXPIRED",
   LOGIN_CHALLENGE_INVALID: "LOGIN_CHALLENGE_INVALID",
   LOGIN_CHALLENGE_INVALID_STATE: "LOGIN_CHALLENGE_INVALID_STATE",
+  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 };
 
 export const UnauthorizedError = {
   message: ErrorMessage.UNAUTHORIZED,
   statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-  code: errorCode.UNAUTHORIZED,
+  code: ErrorCode.UNAUTHORIZED,
 };
 
 export const UserNotFoundError = {
   message: ErrorMessage.USER_NOT_FOUND,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
-  code: errorCode.USER_NOT_FOUND,
+  code: ErrorCode.USER_NOT_FOUND,
 };
 
 export const InvalidCredentialsError = {
   message: ErrorMessage.INVALID_CREDENTIALS,
   statusCode: HttpErrorStatusCode.UNAUTHORIZED,
-  code: errorCode.INVALID_CREDENTIALS,
+  code: ErrorCode.INVALID_CREDENTIALS,
 };
 
 export const UserAlreadyExistsError = {
   message: ErrorMessage.USER_ALREADY_EXISTS,
   statusCode: HttpErrorStatusCode.CONFLICT,
-  code: errorCode.USER_ALREADY_EXISTS,
+  code: ErrorCode.USER_ALREADY_EXISTS,
 };
 
 export const UserNameAlreadyTakenError = {
   message: ErrorMessage.USERNAME_ALREADY_TAKEN,
   statusCode: HttpErrorStatusCode.CONFLICT,
-  code: errorCode.USERNAME_TAKEN,
+  code: ErrorCode.USERNAME_TAKEN,
 };
 
 export const InvalidTokenError = {
   message: ErrorMessage.TOKEN_INVALID,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
-  code: errorCode.TOKEN_INVALID,
+  code: ErrorCode.TOKEN_INVALID,
 };
 
 export const InvalidOtpError = {
-  code: errorCode.INVALID_OTP,
+  code: ErrorCode.INVALID_OTP,
   message: ErrorMessage.INVALID_OTP,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
 };
 
 export const OtpLockedError = {
-  code: errorCode.OTP_LOCKED,
+  code: ErrorCode.OTP_LOCKED,
   message: ErrorMessage.OTP_LOCKED,
   statusCode: HttpErrorStatusCode.LOCKED,
 };
 
 export const OtpExpiredError = {
-  code: errorCode.OTP_EXPIRED,
+  code: ErrorCode.OTP_EXPIRED,
   message: ErrorMessage.OTP_EXPIRED,
   statusCode: HttpErrorStatusCode.GONE,
 };
 
 export const OtpCooldownError = {
-  code: errorCode.OTP_COOLDOWN,
+  code: ErrorCode.OTP_COOLDOWN,
   message: ErrorMessage.OTP_COOLDOWN,
   statusCode: HttpErrorStatusCode.TOO_MANY_REQUESTS,
 };
 
 export const OtpActivationFailedError = {
-  code: errorCode.OTP_ACTIVATION_FAILED,
+  code: ErrorCode.OTP_ACTIVATION_FAILED,
   message: ErrorMessage.OTP_ACTIVATION_FAILED,
   statusCode: HttpErrorStatusCode.INVALID_OPERATION,
 };
 
 export const LoginChallengeExpiredError = {
-  code: errorCode.LOGIN_CHALLENGE_EXPIRED,
+  code: ErrorCode.LOGIN_CHALLENGE_EXPIRED,
   message: ErrorMessage.LOGIN_CHALLENGE_EXPIRED,
   statusCode: HttpErrorStatusCode.UNAUTHORIZED,
 };
 
 export const InvalidChallengeError = {
-  code: errorCode.LOGIN_CHALLENGE_INVALID,
+  code: ErrorCode.LOGIN_CHALLENGE_INVALID,
   message: ErrorMessage.LOGIN_CHALLENGE_INVALID,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
 };
 
 export const InvalidChallengeStateError = {
-  code: errorCode.LOGIN_CHALLENGE_INVALID_STATE,
+  code: ErrorCode.LOGIN_CHALLENGE_INVALID_STATE,
   message: ErrorMessage.LOGIN_CHALLENGE_INVALID_STATE,
   statusCode: HttpErrorStatusCode.BAD_REQUEST,
+};
+
+export const RateLimitExceededError = {
+  code: ErrorCode.RATE_LIMIT_EXCEEDED,
+  message: ErrorMessage.RATE_LIMIT_EXCEEDED,
+  statusCode: 429,
 };
