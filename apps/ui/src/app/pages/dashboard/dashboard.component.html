@@ -1,0 +1,15 @@
+<section class="dashboard">
+  <header class="dashboard-header">
+    <h2 class="dashboard-title">Welcome back</h2>
+    <p class="dashboard-subtitle">Here is your workspace overview</p>
+  </header>
+
+  <div class="dashboard-stats">
+    @for (stat of stats; track stat.label) {
+      <article class="stat-card">
+        <p class="stat-card-label">{{ stat.label }}</p>
+        <p class="stat-card-value">{{ stat.value }}</p>
+      </article>
+    }
+  </div>
+</section>

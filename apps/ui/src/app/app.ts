@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AuthState } from './state/auth.state';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('UI');
+export class App implements OnInit {
+  private authState = inject(AuthState);
+
+  ngOnInit() {
+    this.authState.loadUser();
+  }
 }

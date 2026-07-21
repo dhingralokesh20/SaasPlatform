@@ -1,0 +1,20 @@
+<aside class="sidebar">
+  <div class="sidebar-brand">SaaS App</div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    @for (item of navItems; track item.path) {
+      <a
+        class="sidebar-link"
+        [routerLink]="item.path"
+        routerLinkActive="sidebar-link--active"
+        [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+      >
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="logout-btn" (click)="onLogout()">Logout</button>
+  </div>
+</aside>

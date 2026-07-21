@@ -1,12 +1,12 @@
 import { ErrorMessage, HttpErrorStatusCode } from "./ErrorConfig";
 
-export interface AppErrorOptions{
-    message: string;
-    statusCode?: number;
-    code?: string;
-    data?: unknown;
-    cause?: unknown;
-    isOperational?: boolean;
+export interface AppErrorOptions {
+  message: string;
+  statusCode?: number;
+  code?: string;
+  data?: unknown;
+  cause?: unknown;
+  isOperational?: boolean;
 }
 
 export class AppError extends Error {
@@ -25,17 +25,16 @@ export class AppError extends Error {
 
     this.name = this.constructor.name;
 
-    this.statusCode = options.statusCode || HttpErrorStatusCode.INVALID_OPERATION;
+    this.statusCode =
+      options.statusCode || HttpErrorStatusCode.INVALID_OPERATION;
 
-    this.code =
-      options.code || ErrorMessage.Something_went_wrong;
+    this.code = options.code || ErrorMessage.SOMETHING_WENT_WRONG;
 
     this.data = options.data;
 
     this.cause = options.cause;
 
-    this.isOperational =
-      options.isOperational ?? true;
+    this.isOperational = options.isOperational ?? true;
 
     Error.captureStackTrace(this, this.constructor);
   }

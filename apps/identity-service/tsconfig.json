@@ -1,8 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
-    "ignoreDeprecations": "6.0",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "types": ["node", "vitest/globals"],
     "strict": true,
     "rootDir": "./src",
     "outDir": "./dist"

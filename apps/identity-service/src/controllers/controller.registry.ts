@@ -1,11 +1,9 @@
 import { AuthController } from "./auth.controller";
-
-const authController = new AuthController();
+import { OtpController } from "./otp.controller";
+import { UserController } from "./user.controller";
 
 export const controllerRegistry = {
-    auth: {
-        register: authController.register.bind(authController),
-        // login: authController.login.bind(authController),
-        // getUserById: authController.getUserById.bind(authController)
-    }
-}
+  auth: new AuthController(),
+  user: new UserController(),
+  otp: new OtpController(),
+};

@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { HttpSuccessStatusCode } from "../errors/SuccessConfig";
+import { AuthenticatedRequest } from "../middleware/auth.middleware";
+import {
+  ACCESS_TOKEN_COOKIE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
+} from "../config/cookie.config";
+import { UnauthorizedError } from "../errors/ErrorConfig";
+import { AppError } from "../errors/AppError";
 
 const authService = new AuthService();
 
@@ -8,30 +15,142 @@ export class AuthController {
   // Platform Registration
   async register(req: Request, res: Response) {
     const result = await authService.registerUser(req.body);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
     return res.status(HttpSuccessStatusCode.CREATED).json({
+      success: true,
+      data: result.user,
+    });
+  }
+
+  async login(req: Request, res: Response) {
+    const result = await authService.login(req.body);
+    if (result?.requiresMfa) {
+      return res.status(HttpSuccessStatusCode.SUCCESS).json({
+        success: true,
+        data: {
+          requiresMfa: true,
+          challengeId: result.challengeId,
+        },
+      });
+    }
+
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result.user,
+    });
+  }
+
+  async getNewRefreshToken(req: Request, res: Response) {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError(UnauthorizedError);
+    }
+    const result = await authService.refreshAccessToken(refreshToken);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+    });
+  }
+
+  async logoutCurrentUserSession(req: AuthenticatedRequest, res: Response) {
+    const result = await authService.logoutCurrentUserSession(
+      req.user!.sessionId,
+    );
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
       success: true,
       data: result,
     });
   }
 
-  // async login(req: Request, res: Response) {
-  //   const { email } = req.body;
+  async logoutAllDevices(req: AuthenticatedRequest, res: Response) {
+    const result = await authService.logoutAllActiveSessions(req.user!.userId);
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 
-  //   const user = await authService.login(email);
+  async getLoggedInUserState(req: AuthenticatedRequest, res: Response) {
+    return res.status(200).json({
+      success: true,
+      data: req.user,
+    });
+  }
 
-  //   return res.json({
-  //     success: true,
-  //     user,
-  //   });
-  // }
+  async forgetPassword(req: Request, res: Response) {
+    const result = await authService.forgetPassword(req.body.email);
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 
-  // async getUserById(req: Request, res: Response) {
-  //   const userId = '';
-  //   const user = await authService.getUserById(userId);
+  async validateResetPasswordRequest(req: Request, res: Response) {
+    const result = await authService.validateResetPasswordRequest(
+      req.body.token,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 
-  //   return res.json({
-  //     success: true,
-  //     user,
-  //   });
-  // }
+  async resetPassword(req: Request, res: Response) {
+    const result = await authService.resetPassword(
+      req.body.token,
+      req.body.password,
+    );
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
+
+  async verifyMFA(req: Request, res: Response) {
+    const result = await authService.verifyMFA(req.body);
+    res.cookie("accessToken", result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result.user,
+    });
+  }
+  async resendMFA(req: Request, res: Response) {
+    const { challengeId } = req.body;
+
+    const result = await authService.resendMFA(challengeId);
+
+    return res.status(HttpSuccessStatusCode.SUCCESS).json({
+      success: true,
+      data: result,
+    });
+  }
 }
