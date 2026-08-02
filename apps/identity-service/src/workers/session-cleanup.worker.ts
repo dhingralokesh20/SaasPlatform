@@ -7,14 +7,16 @@ import { redisConfig } from "../config/redis.config";
 const sessionRepository = new SessionRepository();
 
 export const sessionCleanupWorker = new Worker(
-    "session-cleanup",
-    async(job) => {
-        const expiredCount = await sessionRepository.deleteExpiredSessions();
-        const revokedCount = await sessionRepository.deleteRevokedSessions();
+  "session-cleanup",
+  async (job) => {
+    const expiredCount = await sessionRepository.deleteExpiredSessions();
+    const revokedCount = await sessionRepository.deleteRevokedSessions();
 
-        logger.info(`[ SESSION-CLEANUP ] Expired = ${expiredCount}, Revoked = ${revokedCount}`);
-    },
-    {
-        connection: redisConfig
-    }
-)
+    logger.info(
+      `[ SESSION-CLEANUP ] Expired = ${expiredCount}, Revoked = ${revokedCount}`,
+    );
+  },
+  {
+    connection: redisConfig,
+  },
+);

@@ -19,9 +19,9 @@ async function bootstrap() {
   app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Identity Server running on ${PORT}`);
   });
-//   app.listen(3001, , () => {
-//   console.log("Server running");
-// });
+  //   app.listen(3001, , () => {
+  //   console.log("Server running");
+  // });
 }
 
 bootstrap();

@@ -271,7 +271,6 @@ services:
       - kafka2_data:/var/lib/kafka/data
     networks:
       - worksphere-network
-
   kafka-3:
     image: apache/kafka:latest
     container_name: worksphere-kafka-3
@@ -342,6 +341,39 @@ services:
     command: npm run dev
     networks:
       - worksphere-network
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./apps/notification-service/Dockerfile
+
+    container_name: worksphere-notification
+
+    ports:
+      - "3003:3003"
+
+    volumes:
+      - ./apps/notification-service:/app/apps/notification-service
+      - /app/apps/notification-service/node_modules
+      - ./packages/shared-contracts:/app/packages/shared-contracts
+
+    working_dir: /app/apps/notification-service
+
+    command: npm run dev
+
+    depends_on:
+      kafka-1:
+        condition: service_healthy
+
+      kafka-2:
+        condition: service_healthy
+
+      kafka-3:
+        condition: service_healthy
+
+    networks:
+      - worksphere-network
+
 volumes:
   postgres_data:
   angular_cache:
