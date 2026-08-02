@@ -39,6 +39,11 @@ import { rateLimitService } from "./rateLimit.service";
 import { outboxEventService } from "./outboxEvent.service";
 const userRepository = new UserRepository();
 const sessionRepository = new SessionRepository();
+import {
+  EventTypes,
+  PasswordResetRequestedPayload,
+  AggregateTypes
+} from "@worksphere/shared-contracts";
 
 export class AuthService {
   private readonly loginStateMachine = new LoginStateMachine();
@@ -427,7 +432,6 @@ export class AuthService {
         });
       }
       const user = await userRepository.findUserByEmail(email);
-
       // Prevent email enumeration
       if (!user) {
         return {
@@ -452,15 +456,16 @@ export class AuthService {
           },
         );
 
+        const payload: PasswordResetRequestedPayload = {
+          email: user.email,
+          resetUrl,
+        };
         await outboxEventService.createEvent(
           {
-            eventType: "PASSWORD_RESET_REQUESTED",
-            aggregateType: "USER",
+            eventType: EventTypes.PASSWORD_RESET_REQUESTED,
+            aggregateType: AggregateTypes.USER,
             aggregateId: user.id,
-            payload: {
-              email: user.email,
-              resetUrl,
-            },
+            payload,
           },
           {
             transaction,
@@ -471,7 +476,6 @@ export class AuthService {
         forgotPasswordKey,
         RATE_LIMITS.FORGOT_PASSWORD.windowSeconds,
       );
-
 
       // TODO:
       // await emailService.send({

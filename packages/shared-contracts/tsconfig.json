@@ -1,15 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
-    "ignoreDeprecations": "6.0",
-
     "module": "CommonJS",
     "moduleResolution": "node",
 
-    "strict": true,
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+
+    "declaration": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src"

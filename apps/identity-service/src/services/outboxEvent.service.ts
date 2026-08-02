@@ -1,17 +1,19 @@
+import { sequelize } from "../db/sequelize";
+import { EventPublisher } from "../publishers/event-publisher.interface";
+import { kafkaPublisher } from "../publishers/kafka.publisher";
 import { outboxRepository } from "../repositories/outboxEvent.repository";
 import { RepositoryOptions } from "../types/repository.types";
 
 interface CreateOutboxEventParams {
   eventType: string;
-
   aggregateType: string;
-
   aggregateId?: string | null;
-
   payload: Record<string, any>;
 }
 
 class OutboxEventService {
+  constructor(private readonly publisher: EventPublisher) {}
+
   async createEvent(
     params: CreateOutboxEventParams,
     options?: RepositoryOptions,
@@ -27,23 +29,50 @@ class OutboxEventService {
     );
   }
 
-  async getPendingEvents(limit = 100) {
-    return outboxRepository.findPendingEvents(limit);
-  }
+  async processPendingEvents() {
+    const events = await sequelize.transaction(async (transaction) => {
+      const pendingEvents = await outboxRepository.findPendingEvents(100, {
+        transaction,
+      });
 
-  async markProcessing(id: string, options?: RepositoryOptions) {
-    return outboxRepository.markProcessing(id, options);
-  }
+      for (const event of pendingEvents) {
+        await outboxRepository.markProcessing(event.id, {
+          transaction,
+        });
+      }
 
-  async markCompleted(id: string, options?: RepositoryOptions) {
-    return outboxRepository.markCompleted(id, options);
-  }
+      return pendingEvents.map((event) => event.toJSON());
+    });
 
-  async markFailed(id: string, error: string, options?: RepositoryOptions) {
-    await outboxRepository.incrementRetry(id, options);
+    for (const event of events) {
+      try {
+        await this.publisher.publish({
+          eventId: event.eventId,
 
-    return outboxRepository.markFailed(id, error, options);
+          eventType: event.eventType,
+
+          aggregateType: event.aggregateType,
+
+          aggregateId: event.aggregateId,
+
+          version: 1,
+
+          source: "identity-service",
+
+          publishedAt: event.createdAt.toISOString(),
+
+          payload: event.payload,
+        });
+
+        await outboxRepository.markCompleted(event.id);
+      } catch (error) {
+        await outboxRepository.incrementRetry(event.id);
+        await outboxRepository.markFailed(
+          event.id,
+          error instanceof Error ? error.message : "Unknown error",
+        );
+      }
+    }
   }
 }
-
-export const outboxEventService = new OutboxEventService();
+export const outboxEventService = new OutboxEventService(kafkaPublisher);

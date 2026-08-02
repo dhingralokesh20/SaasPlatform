@@ -20,6 +20,7 @@ export class OutboxEvent extends Model<
 
   declare aggregateType: string;
   declare aggregateId: string | null;
+  declare eventId: CreationOptional<string>;
 
   declare payload: Record<string, any>;
 
@@ -31,6 +32,7 @@ export class OutboxEvent extends Model<
 
   declare processedAt: Date | null;
 
+  declare version: CreationOptional<number>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -43,6 +45,13 @@ OutboxEvent.init(
       primaryKey: true,
     },
 
+    eventId: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      unique: true,
+    },
+    
     eventType: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -83,6 +92,12 @@ OutboxEvent.init(
     processedAt: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+
+    version: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+      allowNull: false,
     },
 
     createdAt: {

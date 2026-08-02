@@ -7,15 +7,16 @@ export class OutboxRepository extends BaseRepository<OutboxEvent> {
     super(OutboxEvent);
   }
 
-  async findPendingEvents(limit = 100) {
+  async findPendingEvents(limit = 100, options?: RepositoryOptions) {
     return this.model.findAll({
       where: {
         status: "PENDING",
       },
-
       order: [["createdAt", "ASC"]],
-
       limit,
+      lock: true,
+      skipLocked: true,
+      transaction: options?.transaction,
     });
   }
 
@@ -31,15 +32,10 @@ export class OutboxRepository extends BaseRepository<OutboxEvent> {
     return this.create(
       {
         eventType: data.eventType,
-
         aggregateType: data.aggregateType,
-
         aggregateId: data.aggregateId ?? null,
-
         payload: data.payload,
-
         status: "PENDING",
-
         retryCount: 0,
       },
       options,
@@ -50,6 +46,7 @@ export class OutboxRepository extends BaseRepository<OutboxEvent> {
     return this.update(
       {
         id,
+        status: "PENDING",
       },
       {
         status: "PROCESSING",
@@ -62,6 +59,7 @@ export class OutboxRepository extends BaseRepository<OutboxEvent> {
     return this.update(
       {
         id,
+        status: "PROCESSING",
       },
       {
         status: "COMPLETED",
@@ -75,6 +73,7 @@ export class OutboxRepository extends BaseRepository<OutboxEvent> {
     return this.update(
       {
         id,
+        status: "PROCESSING",
       },
       {
         status: "FAILED",
