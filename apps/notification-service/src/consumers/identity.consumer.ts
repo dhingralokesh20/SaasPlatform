@@ -1,5 +1,6 @@
 import { consumer } from "../kafka/kafka.consumer";
 import { logger } from "../logger";
+import { handleIdentityEvent } from "../router/identityEvent.router";
 
 export async function startIdentityConsumer() {
   await consumer.subscribe({
@@ -20,17 +21,7 @@ export async function startIdentityConsumer() {
         eventId: event.eventId,
       });
 
-      switch (event.eventType) {
-        case "PASSWORD_RESET_REQUESTED":
-          logger.info("Password reset event received", event.payload);
-
-          break;
-
-        default:
-          logger.warn("Unhandled identity event", {
-            eventType: event.eventType,
-          });
-      }
+      await handleIdentityEvent(event);
     },
   });
 }

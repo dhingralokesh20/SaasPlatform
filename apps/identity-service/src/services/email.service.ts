@@ -1,4 +1,4 @@
-import { EmailStatus, EmailType } from "../constants/emailConstants";
+import { EmailType, EmailStatus } from "../constants/emailConstants";
 import { Email } from "../db/models";
 import { TemplateLoader } from "../emails/template.loader";
 import { renderTemplate } from "../emails/template.renderer";

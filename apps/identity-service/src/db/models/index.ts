@@ -1,6 +1,5 @@
 import { User } from "./user.model";
 import { Session } from "./session.model";
-import { Email } from "./email.model";
 import { Otp } from "./otp.model";
 import { OutboxEvent } from "./outboxEvent.model";
 User.hasMany(Session, {
@@ -13,4 +12,4 @@ Session.belongsTo(User, {
   as: "user",
 });
 
-export { User, Session, Email, Otp, OutboxEvent };
+export { User, Session, Otp, OutboxEvent };
