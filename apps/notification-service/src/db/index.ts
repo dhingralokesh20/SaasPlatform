@@ -4,7 +4,7 @@ import { logger } from "../logger";
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    // await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true });
     logger.info("Database connected");
   } catch (error) {
     logger.error(`Database connection failed, ${error}`);

@@ -14,19 +14,33 @@ export class Email extends Model<
 > {
   declare id: CreationOptional<string>;
 
+  // Kafka event reference
+  declare eventId: string;
+
   declare type: EmailType;
+
+  // template name
+  declare template: string;
+
   declare to: string;
   declare subject: string | null;
 
   declare status: CreationOptional<EmailStatus>;
 
-  declare payload: object; // template mappings
+  // template variables
+  declare payload: object;
+
+  declare metadata: object | null;
   declare attachments: object | null;
 
   declare providerMessageId: string | null;
 
   declare attempts: CreationOptional<number>;
+
   declare lastError: string | null;
+
+  declare scheduledAt: Date | null;
+  declare processedAt: Date | null;
 
   declare sentAt: Date | null;
 
@@ -42,8 +56,19 @@ Email.init(
       primaryKey: true,
     },
 
+    eventId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true,
+    },
+
     type: {
       type: DataTypes.ENUM(...Object.values(EmailType)),
+      allowNull: false,
+    },
+
+    template: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
 
@@ -60,6 +85,7 @@ Email.init(
     status: {
       type: DataTypes.ENUM(...Object.values(EmailStatus)),
       defaultValue: EmailStatus.PENDING,
+      allowNull: false,
     },
 
     payload: {
@@ -67,6 +93,10 @@ Email.init(
       allowNull: false,
     },
 
+    metadata: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
     attachments: {
       type: DataTypes.JSON,
       allowNull: true,
@@ -80,10 +110,21 @@ Email.init(
     attempts: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+      allowNull: false,
     },
 
     lastError: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    scheduledAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    processedAt: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
 

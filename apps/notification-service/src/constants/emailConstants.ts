@@ -3,10 +3,11 @@ export enum EmailStatus {
   PROCESSING = "PROCESSING",
   SENT = "SENT",
   FAILED = "FAILED",
+  CANCELLED = "CANCELLED",
 }
 
 export enum EmailType {
-  FORGOT_PASSWORD = "FORGOT_PASSWORD",
+  PASSWORD_RESET = "password-reset",
   OTP = "OTP",
   INVITE = "INVITE",
   EXPORT_USERS = "EXPORT_USERS",

@@ -10,6 +10,12 @@ const envSchema = z.object({
   DB_NAME: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string(),
+  SMTP_SECURE: z.string(),
+  SMTP_USER: z.string(),
+  SMTP_PASSWORD: z.string(),
+  SMTP_FROM: z.string(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
