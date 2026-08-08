@@ -62,6 +62,7 @@ export class SessionRepository extends BaseRepository<Session> {
       options,
     );
   }
+
   async rotateRefreshToken(
     sessionId: string,
     refreshTokenHash: string,

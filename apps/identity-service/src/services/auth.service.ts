@@ -459,6 +459,8 @@ export class AuthService {
         const payload: PasswordResetRequestedPayload = {
           email: user.email,
           resetUrl,
+          year: String(new Date().getFullYear())
+
         };
         await outboxEventService.createEvent(
           {
@@ -477,20 +479,6 @@ export class AuthService {
         RATE_LIMITS.FORGOT_PASSWORD.windowSeconds,
       );
 
-      // TODO:
-      // await emailService.send({
-      //   type: EmailType.FORGOT_PASSWORD,
-      //   to: user.email,
-      //   mappings: {
-      //     firstName: user.firstName,
-      //     resetLink: resetUrl,
-      //   },
-      // });
-
-      // if (config.nodeEnv === "development") {
-      //   console.log("Password reset URL:", resetUrl);
-      // }
-
       return {
         success: true,
         message: SuccessMessage.RESET_PASSWORD_LINK_GENERATED,
@@ -508,6 +496,7 @@ export class AuthService {
       message: SuccessMessage.RESET_PASSWORD_TOKEN_VALID,
     };
   };
+
   resetPassword = async (token: string, password: string) => {
     const user = await this.getValidResetPasswordUser(token);
 
@@ -515,8 +504,7 @@ export class AuthService {
 
     await userRepository.resetPassword(user.id, passwordHash);
 
-    // TODO:
-    // await sessionService.invalidateAllSessions(user.id);
+    await sessionRepository.revokeAllSessionsByUserId(user.id);
 
     return {
       success: true,

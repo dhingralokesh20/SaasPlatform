@@ -3,7 +3,6 @@ import { validate } from "../middleware/validate.middleware";
 import {
   loginSchema,
   registerSchema,
-  refreshTokenSchema,
   forgetPasswordSchema,
   validateResetPasswordSchema,
   resetPasswordSchema,
@@ -27,7 +26,6 @@ const AuthRoutes = {
     refreshToken: {
       method: "post",
       handler: "getNewRefreshToken",
-      middleware: [validate(refreshTokenSchema)],
     },
     logout: {
       method: "post",

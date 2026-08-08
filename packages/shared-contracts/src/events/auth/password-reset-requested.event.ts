@@ -3,6 +3,7 @@ import { EventEnvelope } from "../base.event";
 export interface PasswordResetRequestedPayload {
   email: string;
   resetUrl: string;
+  year: string;
 }
 
 export type PasswordResetRequestedEvent =

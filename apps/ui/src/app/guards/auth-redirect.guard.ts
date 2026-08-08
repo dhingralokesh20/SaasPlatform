@@ -3,13 +3,13 @@ import { inject } from '@angular/core';
 
 import { AuthState } from '../state/auth.state';
 
-export const authGuard: CanActivateFn = () => {
+export const authRedirectGuard: CanActivateFn = () => {
   const authState = inject(AuthState);
   const router = inject(Router);
 
   if (authState.isAuthenticated()) {
-    return true;
+    return router.createUrlTree(['/dashboard']);
   }
 
-  return router.createUrlTree(['/login']);
+  return true;
 };
