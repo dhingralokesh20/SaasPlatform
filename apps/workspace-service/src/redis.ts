@@ -1,6 +1,4 @@
 import Redis from "ioredis";
+import { redisConfig } from "./config/redis.config";
 
-export const redis = new Redis({
-    host:"worksphere-redis",
-    port: 6379
-})
+export const redis = new Redis(redisConfig);

@@ -7,8 +7,10 @@ export const errorMiddleware = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
+  console.error(error);
+
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({
       success: false,
@@ -26,6 +28,7 @@ export const errorMiddleware = (
     success: false,
     message: "Internal Server Error",
     code: "INTERNAL_SERVER_ERROR",
+
     ...(envConfig.NODE_ENV !== "production" && {
       stack: error.stack,
     }),

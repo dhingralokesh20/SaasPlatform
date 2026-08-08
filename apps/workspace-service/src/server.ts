@@ -1,22 +1,20 @@
-import express from "express";
-import { db } from "./db";
-import { redis } from "./redis";
-const app = express();
+import "dotenv/config";
+import app from "./app";
+import { connectDB } from "./db";
+import { envConfig } from "./config/env.config";
+import { logger } from "./logger";
+import "./workers";
+import { kafkaService } from "./services/kafka.service";
 
-app.get("/health", async(_, res) => {
-    const result = await db.query("SELECT NOW()");
+const PORT = envConfig.PORT;
 
-    res.json({servive: "workspace", db: "connected", time: result.rows[0] ,status: "ok"});
-})
+async function bootstrap() {
+  await connectDB();
+  await kafkaService.connect();
 
-app.get("/redis", async(_req, res) => {
-    await redis.set("ping", "pong");
-    const value = await redis.get("ping")
-    res.json({servive: "workspace", redis:"connected", value, status: "ok"});
-})
+  app.listen(PORT, "0.0.0.0", () => {
+    logger.info(`Identity Server running on ${PORT}`);
+  });
+}
 
-
-app.listen(3002, () => {
-    console.log("workspace Server running on 3002")
-})
-
+bootstrap();
