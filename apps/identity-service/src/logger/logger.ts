@@ -19,44 +19,55 @@ const loggerInstance = pino({
       : undefined,
 });
 
-class Logger {
+export class Logger {
+  private logger: pino.Logger;
+
+  constructor(logger: pino.Logger = loggerInstance) {
+    this.logger = logger;
+  }
+
+  child(bindings: Record<string, unknown>): Logger {
+    return new Logger(this.logger.child(bindings));
+  }
+
   info(message: string, data?: unknown) {
     if (data) {
-      loggerInstance.info(data, message);
+      this.logger.info(data, message);
       return;
     }
 
-    loggerInstance.info(message);
+    this.logger.info(message);
   }
 
   error(message: string, data?: unknown) {
     if (data) {
-      loggerInstance.error(data, message);
+      this.logger.error(data, message);
       return;
     }
 
-    loggerInstance.error(message);
+    this.logger.error(message);
   }
 
   warn(message: string, data?: unknown) {
     if (data) {
-      loggerInstance.warn(data, message);
+      this.logger.warn(data, message);
       return;
     }
 
-    loggerInstance.warn(message);
+    this.logger.warn(message);
   }
 
   debug(message: string, data?: unknown) {
     if (data) {
-      loggerInstance.debug(data, message);
+      this.logger.debug(data, message);
       return;
     }
 
-    loggerInstance.debug(message);
+    this.logger.debug(message);
   }
+
   eventPublished(data: { topic: string; eventId: string; eventType: string }) {
-    loggerInstance.info(
+    this.logger.info(
       {
         ...data,
         eventAction: "PUBLISHED",
@@ -72,7 +83,7 @@ class Logger {
     partition?: number;
     offset?: string;
   }) {
-    loggerInstance.info(
+    this.logger.info(
       {
         ...data,
         eventAction: "RECEIVED",
@@ -81,4 +92,5 @@ class Logger {
     );
   }
 }
+
 export const logger = new Logger();

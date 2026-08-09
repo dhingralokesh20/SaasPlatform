@@ -65,6 +65,8 @@ services:
     volumes:
       - ./apps/identity-service:/app/apps/identity-service
       - /app/apps/identity-service/node_modules
+      - ./packages/shared-contracts:/app/packages/shared-contracts
+
 
     working_dir: /app/apps/identity-service
 

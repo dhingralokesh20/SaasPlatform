@@ -1,3 +1,7 @@
+import {
+  AggregateTypes,
+  EventTypes,
+} from "@worksphere/shared-contracts";
 import { OtpStatus, OtpType, OTP_CONFIG } from "../constants/otpConstants";
 import { RATE_LIMITS } from "../constants/rateLimitContants";
 import { sequelize } from "../db/sequelize";
@@ -14,6 +18,7 @@ import { otpRepository } from "../repositories/otp.repository";
 import { generateNumericOtp, hashOtp, safeCompare } from "../utils/otp.util";
 import { otpCooldownKey, OtpKey, rateLimitKey } from "../utils/redisKeys";
 import { rateLimitService } from "./rateLimit.service";
+import { outboxEventService } from "./outboxEvent.service";
 
 interface GenerateOtpParams {
   email: string;
@@ -69,7 +74,7 @@ export class OtpService {
     const expiresAt = new Date(Date.now() + OTP_CONFIG.EXPIRY_SECONDS * 1000);
 
     const otpRow = await sequelize.transaction(async (t) => {
-      return otpRepository.create(
+      const otp = await otpRepository.create(
         {
           email: params.email,
           type: params.type,
@@ -80,6 +85,23 @@ export class OtpService {
         },
         { transaction: t },
       );
+      await outboxEventService.createEvent(
+        {
+          eventType: EventTypes.OTP_REQUESTED,
+          aggregateType: AggregateTypes.USER,
+          aggregateId: otp.id,
+          payload: {
+            email: params.email,
+            otp: plainOtp,
+            year: String(new Date().getFullYear()),
+          },
+        },
+        {
+          transaction: t,
+        },
+      );
+
+      return otp;
     });
 
     // Redis stores active OTP data for fast verification

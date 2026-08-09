@@ -20,21 +20,15 @@ export const requestMiddleware = (
     service: "identity-service",
   });
 
-  req.logger.info(
-    {
-      method: req.method,
-      url: req.originalUrl,
-    },
-    "Incoming request",
-  );
+  req.logger.info("Incoming request", {
+    method: req.method,
+    url: req.originalUrl,
+  });
 
   res.on("finish", () => {
-    req.logger.info(
-      {
-        statusCode: res.statusCode,
-      },
-      "Request completed",
-    );
+    req.logger.info("Request completed", {
+      statusCode: res.statusCode,
+    });
   });
 
   next();

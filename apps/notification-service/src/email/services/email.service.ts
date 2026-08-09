@@ -2,11 +2,8 @@ import { EmailStatus, EmailType } from "../../constants/emailConstants";
 import { CreateEmailInput } from "../../types/email.types";
 import { emailRepository } from "../repositories/email.repository";
 
-
-
 class EmailService {
   async create(data: CreateEmailInput) {
-
     return emailRepository.create({
       eventId: data.eventId,
       type: data.type,
@@ -30,6 +27,25 @@ class EmailService {
       template: "password-reset",
       payload: {
         resetUrl: data.resetUrl,
+      },
+      metadata: {
+        source: "identity-service",
+      },
+    });
+  }
+
+  async sendOtpEmail(data: {
+    eventId: string;
+    email: string;
+    otp: string;
+  }) {
+    return this.create({
+      eventId: data.eventId,
+      type: EmailType.OTP,
+      to: data.email,
+      template: "otp",
+      payload: {
+        otp: data.otp,
       },
       metadata: {
         source: "identity-service",
