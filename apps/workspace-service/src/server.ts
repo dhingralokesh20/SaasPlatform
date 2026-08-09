@@ -13,7 +13,7 @@ async function bootstrap() {
   await kafkaService.connect();
 
   app.listen(PORT, "0.0.0.0", () => {
-    logger.info(`Identity Server running on ${PORT}`);
+    logger.info(`Workspace server running on ${PORT}`);
   });
 }
 

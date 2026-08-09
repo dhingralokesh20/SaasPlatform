@@ -55,6 +55,30 @@ class Logger {
 
     loggerInstance.debug(message);
   }
-}
+  eventPublished(data: { topic: string; eventId: string; eventType: string }) {
+    loggerInstance.info(
+      {
+        ...data,
+        eventAction: "PUBLISHED",
+      },
+      "Kafka event published",
+    );
+  }
 
+  eventReceived(data: {
+    topic: string;
+    eventId: string;
+    eventType: string;
+    partition?: number;
+    offset?: string;
+  }) {
+    loggerInstance.info(
+      {
+        ...data,
+        eventAction: "RECEIVED",
+      },
+      "Kafka event received",
+    );
+  }
+}
 export const logger = new Logger();

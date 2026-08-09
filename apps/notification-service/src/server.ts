@@ -8,12 +8,13 @@ import { startEmailWorker } from "./email/worker/email.worker";
 
 async function bootstrap() {
   await connectDB();
-  await connectConsumer();
 
   await seedEmailTemplates();
-  await startIdentityConsumer();
+
+  startIdentityConsumer();
 
   startEmailWorker();
+
   logger.info("Notification Service Started");
 }
 

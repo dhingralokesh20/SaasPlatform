@@ -10,3 +10,12 @@ export async function connectConsumer() {
 
   logger.info("Kafka consumer connected");
 }
+
+export async function disconnectConsumer() {
+  try {
+    await consumer.disconnect();
+    logger.info("Kafka consumer disconnected");
+  } catch (error) {
+    logger.warn("Failed to disconnect Kafka consumer", { error });
+  }
+}

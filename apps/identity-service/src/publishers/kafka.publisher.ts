@@ -1,4 +1,5 @@
 import { producer } from "../kafka/kafka.producer";
+import { logger } from "../logger";
 import { EventPublisher } from "./event-publisher.interface";
 import { EventEnvelope } from "@worksphere/shared-contracts";
 
@@ -16,6 +17,11 @@ class KafkaPublisher implements EventPublisher {
           value: JSON.stringify(event),
         },
       ],
+    });
+    logger.eventPublished({
+      topic: "identity.events",
+      eventId: event.eventId,
+      eventType: event.eventType,
     });
   }
 }

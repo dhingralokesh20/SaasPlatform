@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { passwordSchema } from "./password.validation";
 
 export const registerSchema = z.object({
   email: z.email(),
-  password: z.string().min(8).max(64),
+  password: passwordSchema,
   username: z.string().min(3).max(30).optional(),
   firstName: z.string().min(1).max(50).optional(),
   lastName: z.string().min(1).max(50).optional(),
@@ -10,7 +11,7 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.email(),
-  password: z.string(),
+  password: passwordSchema,
   rememberMe: z.boolean().optional()
 })
 

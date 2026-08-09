@@ -6,9 +6,14 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon -L --watch src --exec ts-node src/server.ts",
+    "dev:debug": "nodemon -L --watch src --exec \"node --inspect=0.0.0.0:9229 -r ts-node/register src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migration:create": "sequelize-cli migration:generate --name",
+    "migration:up": "sequelize-cli db:migrate",
+    "migration:down": "sequelize-cli db:migrate:undo",
+    "migration:status": "sequelize-cli db:migrate:status"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
