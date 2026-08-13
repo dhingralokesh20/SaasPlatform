@@ -11,7 +11,11 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet\""
+    "test": "echo \"No tests yet\"",
+    "migration:create": "sequelize-cli migration:generate --name",
+    "migration:up": "sequelize-cli db:migrate",
+    "migration:down": "sequelize-cli db:migrate:undo",
+    "migration:status": "sequelize-cli db:migrate:status"
   },
   "dependencies": {
     "cors": "^2.8.6",
