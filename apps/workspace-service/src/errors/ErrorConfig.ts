@@ -4,7 +4,7 @@ export const HttpErrorStatusCode = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   CONFLICT: 409,
-  NOT_FOUND:404,
+  NOT_FOUND: 404,
   GONE: 410,
   TOO_MANY_REQUESTS: 429,
   LOCKED: 423,
@@ -17,6 +17,9 @@ export const ErrorMessage = {
   ORGANIZATION_SLUG_EXISTS: "Organization slug already exists.",
   PLATFORM_USER_NOT_FOUND: "Platform user not found.",
   PLATFORM_USER_INACTIVE: "Platform user is not active.",
+  IDEMPOTENCY_KEY_REQUIRED: "Idempotency-Key header is required.",
+  IDEMPOTENCY_REQUEST_IN_PROGRESS:
+    "A request with this idempotency key is already in progress.",
 };
 
 export const ErrorCode = {
@@ -25,6 +28,9 @@ export const ErrorCode = {
   ORGANIZATION_SLUG_EXISTS: "ORGANIZATION_SLUG_EXISTS",
   PLATFORM_USER_NOT_FOUND: "PLATFORM_USER_NOT_FOUND",
   PLATFORM_USER_INACTIVE: "PLATFORM_USER_INACTIVE",
+
+  IDEMPOTENCY_KEY_REQUIRED: "IDEMPOTENCY_KEY_REQUIRED",
+  IDEMPOTENCY_REQUEST_IN_PROGRESS: "IDEMPOTENCY_REQUEST_IN_PROGRESS",
 };
 
 export const UnauthorizedError = {
@@ -49,4 +55,16 @@ export const PlatformUserInactiveError = {
   message: ErrorMessage.PLATFORM_USER_INACTIVE,
   statusCode: HttpErrorStatusCode.FORBIDDEN,
   code: ErrorCode.PLATFORM_USER_INACTIVE,
+};
+
+export const IdempotencyKeyRequiredError = {
+  message: ErrorMessage.IDEMPOTENCY_KEY_REQUIRED,
+  statusCode: HttpErrorStatusCode.BAD_REQUEST,
+  code: ErrorCode.IDEMPOTENCY_KEY_REQUIRED,
+};
+
+export const IdempotencyRequestInProgressError = {
+  message: ErrorMessage.IDEMPOTENCY_REQUEST_IN_PROGRESS,
+  statusCode: HttpErrorStatusCode.CONFLICT,
+  code: ErrorCode.IDEMPOTENCY_REQUEST_IN_PROGRESS,
 };

@@ -1,0 +1,9 @@
+export const IDEMPOTENCY_STATUS = {
+  PROCESSING: "PROCESSING",
+  COMPLETED: "COMPLETED",
+} as const;
+
+export const IDEMPOTENCY_TTL = {
+  PROCESSING: 5 * 60,
+  COMPLETED: 24 * 60 * 60,
+};
