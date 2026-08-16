@@ -11,6 +11,13 @@ const envSchema = z.object({
   DB_NAME: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
+  IDENTITY_DB_HOST: z.string(),
+  IDENTITY_DB_PORT: z.coerce.number(),
+  IDENTITY_DB_NAME: z.string(),
+  IDENTITY_DB_USER: z.string(),
+  IDENTITY_DB_PASSWORD: z.string(),
+  JWT_ACCESS_SECRET: z.string(),
+  JWT_REFRESH_SECRET: z.string(),
   REDIS_HOST: z.string(),
   REDIS_PORT: z.coerce.number(),
 });

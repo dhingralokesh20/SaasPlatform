@@ -6,16 +6,16 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon -L --watch src --exec ts-node src/server.ts",
-    "dev:debug": "nodemon -L --watch src --exec \"node --inspect=0.0.0.0:9229 -r ts-node/register src/server.ts\"",
-    "build": "tsc",
+    "dev": "nodemon -L --watch src --exec ts-node --files src/server.ts",
+"dev:debug": "nodemon -L --watch src --exec \"node --inspect=0.0.0.0:9229 -r ts-node/register --files src/server.ts\"",    "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet\"",
     "migration:create": "sequelize-cli migration:generate --name",
     "migration:up": "sequelize-cli db:migrate",
     "migration:down": "sequelize-cli db:migrate:undo",
-    "migration:status": "sequelize-cli db:migrate:status"
+    "migration:status": "sequelize-cli db:migrate:status",
+    "sync:platform-users": "tsx --import dotenv/config src/scripts/sync-platform-users.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
@@ -30,6 +30,7 @@
     "@types/pg": "^8.20.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.12",
     "typescript": "^5.8.3"
   }
 }

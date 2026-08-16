@@ -1,1 +1,5 @@
-export const controllerRegistry = {};
+import { OrganizationController } from "./organization.controller";
+
+export const controllerRegistry = {
+    organization: new OrganizationController()
+};

@@ -4,7 +4,7 @@ const loggerInstance = pino({
   level: process.env.LOG_LEVEL || "info",
 
   base: {
-    service: process.env.SERVICE_NAME || "identity-service",
+    service: process.env.SERVICE_NAME || "workspace-service",
   },
 
   transport:

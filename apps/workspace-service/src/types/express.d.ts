@@ -5,6 +5,11 @@ declare global {
     interface Request {
       requestId: string;
       logger: Logger;
+      user?: {
+        userId: string;
+        email: string;
+        sessionId: string;
+      };
     }
   }
 }
