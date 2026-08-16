@@ -23,5 +23,3 @@ temp
 postgres_data
 
 *.tsbuildinfo
-
-scripts
