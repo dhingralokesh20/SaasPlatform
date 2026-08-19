@@ -20,6 +20,7 @@ export const ErrorMessage = {
   IDEMPOTENCY_KEY_REQUIRED: "Idempotency-Key header is required.",
   IDEMPOTENCY_REQUEST_IN_PROGRESS:
     "A request with this idempotency key is already in progress.",
+  ORGANIZATION_NOT_FOUND: "Organization not found.",
 };
 
 export const ErrorCode = {
@@ -28,7 +29,7 @@ export const ErrorCode = {
   ORGANIZATION_SLUG_EXISTS: "ORGANIZATION_SLUG_EXISTS",
   PLATFORM_USER_NOT_FOUND: "PLATFORM_USER_NOT_FOUND",
   PLATFORM_USER_INACTIVE: "PLATFORM_USER_INACTIVE",
-
+  ORGANIZATION_NOT_FOUND: "ORGANIZATION_NOT_FOUND",
   IDEMPOTENCY_KEY_REQUIRED: "IDEMPOTENCY_KEY_REQUIRED",
   IDEMPOTENCY_REQUEST_IN_PROGRESS: "IDEMPOTENCY_REQUEST_IN_PROGRESS",
 };
@@ -67,4 +68,10 @@ export const IdempotencyRequestInProgressError = {
   message: ErrorMessage.IDEMPOTENCY_REQUEST_IN_PROGRESS,
   statusCode: HttpErrorStatusCode.CONFLICT,
   code: ErrorCode.IDEMPOTENCY_REQUEST_IN_PROGRESS,
+};
+
+export const OrganizationNotFoundError = {
+  message: ErrorMessage.ORGANIZATION_NOT_FOUND,
+  statusCode: HttpErrorStatusCode.NOT_FOUND,
+  code: ErrorCode.ORGANIZATION_NOT_FOUND,
 };

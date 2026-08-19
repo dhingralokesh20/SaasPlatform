@@ -4,8 +4,9 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
-} from 'sequelize';
-import { sequelize } from '../sequelize';
+} from "sequelize";
+import { sequelize } from "../sequelize";
+import { Organization } from "./organization.model";
 
 export class Membership extends Model<
   InferAttributes<Membership>,
@@ -14,8 +15,8 @@ export class Membership extends Model<
   declare id: CreationOptional<string>;
   declare userId: string;
   declare organizationId: string;
-  declare status: 'ACTIVE' | 'SUSPENDED' | 'REMOVED';
-
+  declare status: "ACTIVE" | "SUSPENDED" | "REMOVED";
+  declare organization?: Organization;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -32,8 +33,8 @@ Membership.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'platform_users',
-        key: 'userId',
+        model: "platform_users",
+        key: "userId",
       },
     },
 
@@ -41,15 +42,15 @@ Membership.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'organizations',
-        key: 'id',
+        model: "organizations",
+        key: "id",
       },
     },
 
     status: {
-      type: DataTypes.ENUM('ACTIVE', 'SUSPENDED', 'REMOVED'),
+      type: DataTypes.ENUM("ACTIVE", "SUSPENDED", "REMOVED"),
       allowNull: false,
-      defaultValue: 'ACTIVE',
+      defaultValue: "ACTIVE",
     },
 
     createdAt: {
@@ -66,7 +67,7 @@ Membership.init(
   },
   {
     sequelize,
-    tableName: 'memberships',
+    tableName: "memberships",
     timestamps: true,
   },
 );

@@ -22,4 +22,25 @@ export class OrganizationRepository extends BaseRepository<Organization> {
   ) {
     return this.create(data, options);
   }
+  async updateOrganization(
+    organizationId: string,
+    data: {
+      name?: string;
+      description?: string;
+      logo?: string;
+    },
+    options?: RepositoryOptions,
+  ) {
+    await this.update({ id: organizationId }, data, options);
+
+    return this.findById(organizationId, options);
+  }
+  async disableOrganization(
+    organizationId: string,
+    options?: RepositoryOptions,
+  ) {
+    await this.update({ id: organizationId }, { status: "DISABLED" }, options);
+
+    return this.findById(organizationId, options);
+  }
 }

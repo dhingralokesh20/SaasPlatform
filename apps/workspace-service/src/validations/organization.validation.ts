@@ -32,6 +32,12 @@ export const createOrganizationSchema = z
   })
   .strict();
 
-export type CreateOrganizationInput = z.infer<
-  typeof createOrganizationSchema
->;
+export const updateOrganizationSchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    description: z.string().trim().optional(),
+    logo: z.string().trim().optional(),
+  })
+  .strict();
+
+export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;

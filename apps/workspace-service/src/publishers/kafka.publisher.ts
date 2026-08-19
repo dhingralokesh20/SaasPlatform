@@ -8,7 +8,7 @@ class KafkaPublisher implements EventPublisher {
     await producer.connect();
 
     await producer.send({
-      topic: "identity.events",
+      topic: "workspace.events",
       acks: -1, // all
       messages: [
         {
@@ -19,7 +19,7 @@ class KafkaPublisher implements EventPublisher {
       ],
     });
     logger.eventPublished({
-      topic: "identity.events",
+      topic: "workspace.events",
       eventId: event.eventId,
       eventType: event.eventType,
     });

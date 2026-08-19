@@ -5,6 +5,7 @@ import { AppError } from "../errors/AppError";
 import {
   IdempotencyKeyRequiredError,
   IdempotencyRequestInProgressError,
+  OrganizationNotFoundError,
   OrganizationSlugExistsError,
 } from "../errors/ErrorConfig";
 import { OutboxRepository } from "../repositories/outboxEvent.repository";
@@ -57,7 +58,6 @@ export class OrganizationService {
         throw new AppError(OrganizationSlugExistsError);
       }
 
-
       const result = await sequelize.transaction(async (transaction) => {
         const organization =
           await this.organizationRepository.createOrganization(
@@ -70,15 +70,14 @@ export class OrganizationService {
             { transaction },
           );
 
-        const membership =
-          await this.membershipRepository.createMembership(
-            {
-              userId,
-              organizationId: organization.id,
-              status: "ACTIVE",
-            },
-            { transaction },
-          );
+        const membership = await this.membershipRepository.createMembership(
+          {
+            userId,
+            organizationId: organization.id,
+            status: "ACTIVE",
+          },
+          { transaction },
+        );
 
         await this.outboxRepository.createEvent(
           {
@@ -117,5 +116,103 @@ export class OrganizationService {
 
       throw error;
     }
+  }
+  async getUserOrganizations(userId: string) {
+    const memberships =
+      await this.membershipRepository.findMembershipsByUserId(userId);
+
+    return memberships.map((membership) => membership.organization);
+  }
+
+  async getUserOrganization(userId: string, organizationId: string) {
+    const membership =
+      await this.membershipRepository.findMembershipByUserAndOrganization(
+        userId,
+        organizationId,
+      );
+
+    if (!membership) {
+      throw new AppError(OrganizationNotFoundError);
+    }
+
+    return membership.organization;
+  }
+
+  async updateOrganization(
+    userId: string,
+    organizationId: string,
+    data: {
+      name?: string;
+      description?: string;
+      logo?: string;
+    },
+  ) {
+    const membership =
+      await this.membershipRepository.findMembershipByUserAndOrganization(
+        userId,
+        organizationId,
+      );
+
+    if (!membership || membership.status !== "ACTIVE") {
+      throw new AppError(OrganizationNotFoundError);
+    }
+
+    return sequelize.transaction(async (transaction) => {
+      const organization = await this.organizationRepository.updateOrganization(
+        organizationId,
+        data,
+        { transaction },
+      );
+
+      await this.outboxRepository.createEvent(
+        {
+          eventType: "organization.updated",
+          aggregateType: "organization",
+          aggregateId: organizationId,
+          payload: {
+            organizationId,
+            updatedBy: userId,
+            changes: data,
+          },
+        },
+        { transaction },
+      );
+
+      return organization;
+    });
+  }
+
+async disableOrganization(userId: string, organizationId: string) {
+    const membership =
+      await this.membershipRepository.findMembershipByUserAndOrganization(
+        userId,
+        organizationId,
+      );
+
+    if (!membership || membership.status !== "ACTIVE") {
+      throw new AppError(OrganizationNotFoundError);
+    }
+
+    return sequelize.transaction(async (transaction) => {
+      const organization =
+        await this.organizationRepository.disableOrganization(organizationId, {
+          transaction,
+        });
+
+      await this.outboxRepository.createEvent(
+        {
+          eventType: "organization.deleted",
+          aggregateType: "organization",
+          aggregateId: organizationId,
+          payload: {
+            organizationId,
+            deletedBy: userId,
+          },
+        },
+        { transaction },
+      );
+
+      return organization;
+    });
   }
 }
