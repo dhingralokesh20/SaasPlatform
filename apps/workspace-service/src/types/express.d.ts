@@ -10,6 +10,11 @@ declare global {
         email: string;
         sessionId: string;
       };
+      organizationMember?: {
+        userId: string;
+        organizationId: string;
+        status: "ACTIVE" | "SUSPENDED" | "REMOVED";
+      };
     }
   }
 }

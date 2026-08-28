@@ -62,4 +62,19 @@ export class MembershipRepository extends BaseRepository<Membership> {
       transaction: options?.transaction,
     });
   }
+
+  async findMembershipByEmailAndOrganization(
+    email: string,
+    organizationId: string,
+    options?: RepositoryOptions,
+  ) {
+    return this.model.findOne({
+      where: {
+        email,
+        organizationId,
+        status: "ACTIVE",
+      },
+      transaction: options?.transaction,
+    });
+  }
 }

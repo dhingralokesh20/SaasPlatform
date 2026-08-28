@@ -15,6 +15,7 @@ export class Membership extends Model<
   declare id: CreationOptional<string>;
   declare userId: string;
   declare organizationId: string;
+  declare email: string;
   declare status: "ACTIVE" | "SUSPENDED" | "REMOVED";
   declare organization?: Organization;
   declare createdAt: CreationOptional<Date>;
@@ -36,6 +37,11 @@ Membership.init(
         model: "platform_users",
         key: "userId",
       },
+    },
+
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
 
     organizationId: {
