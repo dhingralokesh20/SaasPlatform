@@ -2,7 +2,11 @@ import { z } from "zod";
 import { AppError } from "../errors/AppError";
 import { InvitationValidationFailedError } from "../errors/ErrorConfig";
 import { invitationRepository } from "../repositories/invitation.repository";
+import { membershipRepository } from "../repositories/membership.repository";
 import { generateInvitationToken, hashInvitationToken } from "../utils/crypto";
+import { sequelize } from "../db/sequelize";
+import { outboxEventService } from "./outboxEvent.service";
+import { AggregateTypes, EventTypes } from "@packages/shared-contracts/dist";
 
 const emailSchema = z.email();
 
@@ -90,34 +94,63 @@ export class InvitationService {
       });
     }
 
-    const invitations = [];
+    const invitations: Array<{
+      invitation: Awaited<
+        ReturnType<typeof invitationRepository.createInvitation>
+      >;
+      token: string;
+    }> = [];
 
-    // Create invitations only after all emails pass validation.
-    for (const email of normalizedEmails) {
-      const token = generateInvitationToken();
-      const tokenHash = hashInvitationToken(token);
+    // Create invitations and outbox events atomically.
+    await sequelize.transaction(async (transaction) => {
+      for (const email of normalizedEmails) {
+        const token = generateInvitationToken();
+        const tokenHash = hashInvitationToken(token);
 
-      const expiresAt = new Date(
-        Date.now() +
-          INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-      );
+        const expiresAt = new Date(
+          Date.now() +
+            INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+        );
 
-      const invitation =
-        await invitationRepository.createInvitation({
-          organizationId: data.organizationId,
-          email,
-          invitedBy: data.invitedBy,
-          tokenHash,
-          expiresAt,
+        const invitation =
+          await invitationRepository.createInvitation(
+            {
+              organizationId: data.organizationId,
+              email,
+              invitedBy: data.invitedBy,
+              tokenHash,
+              expiresAt,
+            },
+            {
+              transaction,
+            },
+          );
+
+        await outboxEventService.createEvent(
+          {
+            eventType: EventTypes.INVITATION_CREATED,
+            aggregateType: AggregateTypes.INVITATION,
+            aggregateId: invitation.id,
+            payload: {
+              invitationId: invitation.id,
+              organizationId: invitation.organizationId,
+              email: invitation.email,
+              invitedBy: invitation.invitedBy,
+              token,
+              expiresAt: invitation.expiresAt.toISOString(),
+            },
+          },
+          {
+            transaction,
+          },
+        );
+
+        invitations.push({
+          invitation,
+          token,
         });
-
-      invitations.push({
-        invitation,
-        token,
-      });
-    }
-
-    // TODO: Create outbox events in the same transaction.
+      }
+    });
 
     return {
       total: invitations.length,
