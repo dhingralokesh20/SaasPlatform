@@ -34,11 +34,7 @@ class EmailService {
     });
   }
 
-  async sendOtpEmail(data: {
-    eventId: string;
-    email: string;
-    otp: string;
-  }) {
+  async sendOtpEmail(data: { eventId: string; email: string; otp: string }) {
     return this.create({
       eventId: data.eventId,
       type: EmailType.OTP,
@@ -49,6 +45,28 @@ class EmailService {
       },
       metadata: {
         source: "identity-service",
+      },
+    });
+  }
+
+  async sendInvitationEmail(data: {
+    eventId: string;
+    email: string;
+    invitationUrl: string;
+    expiresAt: string;
+  }) {
+    return this.create({
+      eventId: data.eventId,
+      type: EmailType.INVITE,
+      to: data.email,
+      template: "invitation",
+      payload: {
+        invitationUrl: data.invitationUrl,
+        expiresAt: data.expiresAt,
+        year: String(new Date().getFullYear()),
+      },
+      metadata: {
+        source: "workspace-service",
       },
     });
   }

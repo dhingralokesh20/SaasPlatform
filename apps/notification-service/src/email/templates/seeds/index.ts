@@ -1,10 +1,12 @@
 import { emailTemplateRepository } from "../../repositories/emailTemplate.repository";
+import { invitationTemplate } from "./invitation.seed";
 import { otpTemplate } from "./otp.seed";
 import { passwordResetTemplate } from "./password-reset.seed";
 
 const templates = [
   passwordResetTemplate,
-  otpTemplate
+  otpTemplate,
+  invitationTemplate
 ];
 
 export async function seedEmailTemplates() {

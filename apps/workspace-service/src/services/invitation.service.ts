@@ -6,8 +6,10 @@ import { invitationRepository } from "../repositories/invitation.repository";
 import { membershipRepository } from "../repositories/membership.repository";
 import { generateInvitationToken, hashInvitationToken } from "../utils/crypto";
 import { sequelize } from "../db/sequelize";
-import { AggregateTypes, EventTypes } from "@packages/shared-contracts/dist";
+import { AggregateTypes, EventTypes } from "@worksphere/shared-contracts/dist";
 import { outboxEventService } from "./outboxEvent.service";
+import { Invitation } from "../db/models";
+import { envConfig } from "../config/env.config";
 
 const emailSchema = z.email();
 
@@ -102,7 +104,7 @@ export class InvitationService {
       invitation: Invitation;
       token: string;
     }> = [];
-    
+
     // Create invitations and outbox events atomically.
     await sequelize.transaction(async (transaction) => {
       for (const email of normalizedEmails) {
@@ -125,6 +127,9 @@ export class InvitationService {
             transaction,
           },
         );
+        const invitationUrl =
+          `${envConfig.FRONTEND_URL}/accept-invitation?token=` +
+          encodeURIComponent(token);
 
         await outboxEventService.createEvent(
           {
@@ -135,7 +140,7 @@ export class InvitationService {
               invitationId: invitation.id,
               organizationId: invitation.organizationId,
               email: invitation.email,
-              token,
+              invitationUrl,
               invitedBy: invitation.invitedBy,
               expiresAt: invitation.expiresAt.toISOString(),
             },

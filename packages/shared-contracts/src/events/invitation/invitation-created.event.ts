@@ -5,7 +5,7 @@ export interface InvitationCreatedPayload {
   organizationId: string;
   email: string;
   invitedBy: string;
-  token: string;
+  invitationUrl: string;
   expiresAt: string;
 }
 

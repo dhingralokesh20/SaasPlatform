@@ -5,26 +5,26 @@ import {
 } from "../kafka/kafka.consumer";
 
 import { logger } from "../logger";
-import { handleIdentityEvent } from "../router/identityEvent.router";
+import { handleWorkspaceEvent } from "../router/workspaceEvent.router";
 
 const RETRY_DELAYS = [1000, 2000, 5000, 10000, 30000];
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function startIdentityConsumer() {
+export async function startworkspaceConsumer() {
   let attempt = 0;
 
-  const consumer = createConsumer("notification-identity-service");
+  const consumer = createConsumer("notification-workspace-service");
   while (true) {
     try {
       await connectConsumer(consumer);
 
       await consumer.subscribe({
-        topic: "identity.events",
+        topic: "workspace.events",
         fromBeginning: false,
       });
 
-      logger.info("Subscribed to identity.events");
+      logger.info("Subscribed to workspace.events");
 
       await consumer.run({
         eachMessage: async ({ message }) => {
@@ -34,12 +34,12 @@ export async function startIdentityConsumer() {
 
           const event = JSON.parse(message.value.toString());
 
-          logger.info("Identity event received", {
+          logger.info("workspace event received", {
             eventType: event.eventType,
             eventId: event.eventId,
           });
 
-          await handleIdentityEvent(event);
+          await handleWorkspaceEvent(event);
         },
       });
 
