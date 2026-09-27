@@ -42,16 +42,16 @@ Invitation.belongsTo(Organization, {
   as: "organization",
 });
 
-// Platform User → Invitation (invitedBy)
-PlatformUser.hasMany(Invitation, {
+// Membership → Invitation (invitedBy)
+Membership.hasMany(Invitation, {
   foreignKey: "invitedBy",
-  sourceKey: "userId",
+  sourceKey: "id",
   as: "sentInvitations",
 });
 
-Invitation.belongsTo(PlatformUser, {
+Invitation.belongsTo(Membership, {
   foreignKey: "invitedBy",
-  targetKey: "userId",
+  targetKey: "id",
   as: "inviter",
 });
 
