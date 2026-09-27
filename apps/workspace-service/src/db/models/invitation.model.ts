@@ -56,8 +56,8 @@ Invitation.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'platform_users',
-        key: 'userId',
+        model: 'memberships',
+        key: 'id',
       },
     },
 
