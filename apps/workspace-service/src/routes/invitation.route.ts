@@ -2,6 +2,7 @@ import { AuthMiddleware } from "../middleware/auth.middleware";
 import { ValidatePlatformUserMiddleware } from "../middleware/validatePlatformUser";
 import { validate } from "../middleware/validate.middleware";
 import { createInvitationSchema } from "../validations/invitation.validation";
+import { OrganizationMemberMiddleware } from "../middleware/organizationMember.middleware";
 
 const InvitationRoutes = {
   basePath: "/invitation",
@@ -14,6 +15,7 @@ const InvitationRoutes = {
         middleware: [
           AuthMiddleware,
           ValidatePlatformUserMiddleware,
+          OrganizationMemberMiddleware,
           validate(createInvitationSchema),
         ],
       },

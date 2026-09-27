@@ -12,6 +12,7 @@ declare global {
       };
       organizationMember?: {
         userId: string;
+        id: string;
         organizationId: string;
         status: "ACTIVE" | "SUSPENDED" | "REMOVED";
       };

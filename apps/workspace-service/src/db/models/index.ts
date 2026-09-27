@@ -54,5 +54,4 @@ Invitation.belongsTo(Membership, {
   targetKey: "id",
   as: "inviter",
 });
-
 export { Organization, PlatformUser, Membership, Invitation, OutboxEvent };

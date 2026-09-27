@@ -1,12 +1,13 @@
 import { z } from "zod";
+
 import { AppError } from "../errors/AppError";
 import { InvitationValidationFailedError } from "../errors/ErrorConfig";
 import { invitationRepository } from "../repositories/invitation.repository";
 import { membershipRepository } from "../repositories/membership.repository";
 import { generateInvitationToken, hashInvitationToken } from "../utils/crypto";
 import { sequelize } from "../db/sequelize";
-import { outboxEventService } from "./outboxEvent.service";
 import { AggregateTypes, EventTypes } from "@packages/shared-contracts/dist";
+import { outboxEventService } from "./outboxEvent.service";
 
 const emailSchema = z.email();
 
@@ -30,11 +31,7 @@ export class InvitationService {
   }) {
     // Normalize and remove duplicate emails.
     const normalizedEmails = [
-      ...new Set(
-        data.emails.map((email) =>
-          email.trim().toLowerCase(),
-        ),
-      ),
+      ...new Set(data.emails.map((email) => email.trim().toLowerCase())),
     ];
 
     const validationErrors: InvitationValidationError[] = [];
@@ -48,20 +45,30 @@ export class InvitationService {
           email,
           code: "INVALID_EMAIL",
         });
-
         continue;
       }
 
       // Prevent users from inviting themselves.
-      if (
-        email ===
-        data.invitedByEmail.trim().toLowerCase()
-      ) {
+      if (email === data.invitedByEmail.trim().toLowerCase()) {
         validationErrors.push({
           email,
           code: "SELF_INVITATION",
         });
+        continue;
+      }
 
+      // Prevent inviting an existing  organization member.
+      const existingMembership =
+        await membershipRepository.findMembershipByEmailAndOrganization(
+          email,
+          data.organizationId,
+        );
+
+      if (existingMembership) {
+        validationErrors.push({
+          email,
+          code: "ALREADY_MEMBER",
+        });
         continue;
       }
 
@@ -77,11 +84,8 @@ export class InvitationService {
           email,
           code: "ALREADY_INVITED",
         });
-
         continue;
       }
-
-      // TODO: Check whether the email is already a member.
     }
 
     // Do not create any invitation if validation fails.
@@ -95,12 +99,10 @@ export class InvitationService {
     }
 
     const invitations: Array<{
-      invitation: Awaited<
-        ReturnType<typeof invitationRepository.createInvitation>
-      >;
+      invitation: Invitation;
       token: string;
     }> = [];
-
+    
     // Create invitations and outbox events atomically.
     await sequelize.transaction(async (transaction) => {
       for (const email of normalizedEmails) {
@@ -108,23 +110,21 @@ export class InvitationService {
         const tokenHash = hashInvitationToken(token);
 
         const expiresAt = new Date(
-          Date.now() +
-            INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+          Date.now() + INVITATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
         );
 
-        const invitation =
-          await invitationRepository.createInvitation(
-            {
-              organizationId: data.organizationId,
-              email,
-              invitedBy: data.invitedBy,
-              tokenHash,
-              expiresAt,
-            },
-            {
-              transaction,
-            },
-          );
+        const invitation = await invitationRepository.createInvitation(
+          {
+            organizationId: data.organizationId,
+            email,
+            invitedBy: data.invitedBy,
+            tokenHash,
+            expiresAt,
+          },
+          {
+            transaction,
+          },
+        );
 
         await outboxEventService.createEvent(
           {
@@ -135,8 +135,8 @@ export class InvitationService {
               invitationId: invitation.id,
               organizationId: invitation.organizationId,
               email: invitation.email,
-              invitedBy: invitation.invitedBy,
               token,
+              invitedBy: invitation.invitedBy,
               expiresAt: invitation.expiresAt.toISOString(),
             },
           },

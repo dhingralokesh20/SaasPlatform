@@ -25,6 +25,7 @@ export const OrganizationMemberMiddleware = async (
 
     req.organizationMember = {
       userId: membership.userId,
+      id: membership.id,
       organizationId: membership.organizationId,
       status: membership.status,
     };

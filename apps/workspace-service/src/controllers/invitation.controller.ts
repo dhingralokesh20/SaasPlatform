@@ -15,7 +15,7 @@ export class InvitationController {
     const invitations = await invitationService.createInvitations({
       organizationId,
       emails,
-      invitedBy: req?.organizationMember!.userId,
+      invitedBy: req?.organizationMember!.id,
       invitedByEmail: req.user!.email
     });
 

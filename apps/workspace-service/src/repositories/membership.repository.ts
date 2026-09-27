@@ -72,9 +72,10 @@ export class MembershipRepository extends BaseRepository<Membership> {
       where: {
         email,
         organizationId,
-        status: "ACTIVE",
       },
       transaction: options?.transaction,
     });
   }
 }
+
+export const membershipRepository = new MembershipRepository();
